@@ -9,7 +9,7 @@ int	validConf(std::string file_path, std::string ext)
 	if (valid)
 		return (p_error("Invalid configuration file extension!"), 0);
 	valid = 1;
-	file.open(file_path);
+	file.open(file_path.c_str());
 	if (!file.is_open())
 		return (p_error("Unable to open configuration file!"), 0);
 	file.close();
