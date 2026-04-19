@@ -232,7 +232,7 @@ void parse_block(t_configuration &conf, std::ifstream &file, int idx)
 
 void	parseConf(t_configuration &conf, std::ifstream &file)
 {
-    //wanna re qrite set_cgi , set methods and redirections 
+    //need to throw error if not valid indentation
     std::string line;
     int token;
     
