@@ -24,7 +24,6 @@ clean:
 	rm -rf $(BINDIR)
 fclean: clean
 	rm -f $(NAME)
-
 .PHONY:
 	all re fclean clean
 
