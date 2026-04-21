@@ -138,12 +138,15 @@ void    set_methods(intboolMap &map, std::string &meths)
 
     map[GET] = false;
     map[POST] = false;
+    map[DELETE] = false;
     while(ss >> meths)
     {
         if(meths == "GET")
             map[GET] = true;
         else if (meths == "POST")
             map[POST] = true;
+        else if (meths == "DELETE")
+            map[DELETE] = true;
         else
             throw ConfigException("Invalid method");
     }
