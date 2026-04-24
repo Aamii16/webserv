@@ -17,59 +17,75 @@ class ConfigException : public std::exception
         }
 };
 
-int    valid_token(std::string token, bool block)
+int    valid_token(std::string line, int block)
 {
-    std::stringstream    s_token(token);
+    std::string         token;
+    std::stringstream    s_token(line);
+
     s_token >> token;
     if (token.empty())
         return 0;
-    if (!block && token == "server")
-        return SERVER;
-    if (!block && token == "error_pages")
-        return ERR_PAGE;
-    if (!block && token == "location")
-        return LOCATION;
-    if (block && token == "listen")
-        return PORT;
-    if (block && token == "server_name")
-        return S_NAME;
-    if (block && token == "root")
+    if (!block)
+    {
+        if (token == "error_pages")
+            return ERR_PAGE;
+        if (token == "location")
+            return LOCATION;
+    }
+    if (block == SERVER)
+    {
+        if (token == "listen")
+            return PORT;
+        if (token == "server_name")
+            return S_NAME;
+        if (token == "client_max_body_size")
+            return C_MAX_SIZE;
+    }
+    if (token == "root")
         return ROOT;
-    if (block && token == "path")
+    else if (token == "path")
         return PATH;
-    if (block && token == "client_max_body_size")
-        return C_MAX_SIZE;
-    if (block && token == "index")
+    else if (token == "index")
         return IDX;
-    if (block && token == "autoindex")
+    else if (token == "autoindex")
         return AUTO_IDX;
-    if (block && token == "methods")
+    else if (token == "methods")
         return METHODS;
-    if (block && token == "return")
+    else if (token == "return")
         return REDIR;
-    if (block && token == "cgi")
+    else if (token == "cgi")
         return CGI;
     return -1;
 }
 
-int parseTokenValue(std::string line, std::string &token, std::string &value)
+int parseTokenValue(std::string line, std::string &token, std::string &value, int block)
 {
+
     std::stringstream ss(line);
+    size_t  non_tab = line.find_first_not_of('\t');
     ss >> token;
     ss >> value;
-    return valid_token(token, 1);
+    if (!token.empty())
+    {
+        if (block == SERVER && non_tab != 1)
+            throw ConfigException("Invalid Config format at : " + token);
+        else if (block != SERVER && non_tab != 2)
+            throw ConfigException("Invalid Config format at : " + token);
+    }
+    return valid_token(token, block);
 }
 
-void parse_server(t_configuration &conf, std::ifstream &file)
+void parse_server(t_configuration &conf, std::ifstream &file, std::string &line)
 {
-    std::string   line;
     std::string   token;
     std::string   value;
     int           idx;
 
+    if (line != "server")
+        throw ConfigException("Invalid Conf");
     while(std::getline(file, line) && !line.empty())
     {
-        idx = parseTokenValue(line, token, value);
+        idx = parseTokenValue(line, token, value, SERVER);
         switch (idx)
         {
             case PORT:
@@ -108,7 +124,7 @@ void    parse_err_pages(std::map<int, std::string> &map, std::ifstream &file)
     
     while(std::getline(file, line) && !line.empty())
     {
-        parseTokenValue(line, token, value);
+        parseTokenValue(line, token, value, 1);
         errno = 0;
         key = std::strtol(token.c_str(), NULL, 10);
         if (!key || errno == ERANGE)
@@ -178,7 +194,7 @@ void    parse_location(t_configuration &conf, std::ifstream &file)
     
     while(std::getline(file, line) && !line.empty())
     {
-        idx = parseTokenValue(line, token, value);
+        idx = parseTokenValue(line, token, value, 1);
         switch (idx)
         {
             case PATH:
@@ -213,38 +229,62 @@ void    parse_location(t_configuration &conf, std::ifstream &file)
     conf.locations.push_back(loc);
 }
 
-void parse_block(t_configuration &conf, std::ifstream &file, int idx)
+
+void    print_conf(t_configuration &conf)
 {
-    switch (idx)
+    std::cout << "=== SERVER ===" << std::endl;
+    std::cout << "Port: " << conf.server.port << std::endl;
+    std::cout << "Name: " << conf.server.name << std::endl;
+    std::cout << "Root: " << conf.server.root << std::endl;
+    std::cout << "Index: " << conf.server.index << std::endl;
+    std::cout << "Max Body Size: " << conf.server.max_body_size << std::endl;
+
+    std::cout << "\n=== ERROR PAGES ===" << std::endl;
+    for (std::map<int, std::string>::const_iterator it = conf.err_pages.begin(); it != conf.err_pages.end(); ++it)
+        std::cout << it->first << ": " << it->second << std::endl;
+
+    std::cout << "\n=== LOCATIONS ===" << std::endl;
+    for (size_t i = 0; i < conf.locations.size(); ++i)
     {
-        case 1:
-            parse_server(conf, file);
-            break;
-        case 2:
-            parse_err_pages(conf.err_pages, file);
-            break;
-        case 3:
-            parse_location(conf, file);
-            break;
-        case 0:
-            break;
-        default:
-            throw ConfigException("Invalid token");
-    }   
+        std::cout << "\nLocation " << i << ":" << std::endl;
+        std::cout << "  Path: " << conf.locations[i].path << std::endl;
+        std::cout << "  Root: " << conf.locations[i].root << std::endl;
+        std::cout << "  Index: " << conf.locations[i].index << std::endl;
+        std::cout << "  Autoindex: " << conf.locations[i].auto_idx << std::endl;
+        std::cout << "  CGI: " << conf.locations[i].cgi << std::endl;
+        std::cout << "  Methods:\n  GET: " << conf.locations[i].methods[GET] << "\tPOST: " << conf.locations[i].methods[GET] << std::endl;
+    }
 }
 
 void	parseConf(t_configuration &conf, std::ifstream &file)
 {
-    //need to throw error if not valid indentation
     std::string line;
-    int token;
-    
+    size_t      non_tab;
+    int         idx;
+
     try
     {
+        std::getline(file, line);
+        parse_server(conf, file, line);
         while (std::getline(file, line))
         {
-            token = valid_token(line, 0);
-            parse_block(conf, file, token);
+            non_tab = line.find_first_not_of('\t');
+            if (non_tab != 1)
+                throw ConfigException("Invalid Config format at: " + line);
+            idx = valid_token(line, 0); 
+            switch (idx)
+            {
+                case ERR_PAGE:
+                    parse_err_pages(conf.err_pages, file);
+                    break;
+                case LOCATION:
+                    parse_location(conf, file);
+                    break;
+                case 0:
+                    break;
+                default:
+                    throw ConfigException("Invalid token at:" + line);
+            }   
         }
     }
     catch(std::exception &e)
@@ -254,28 +294,5 @@ void	parseConf(t_configuration &conf, std::ifstream &file)
         exit(1);
     }
     file.close();
-    // {
-    //     std::cout << "=== SERVER ===" << std::endl;
-    //     std::cout << "Port: " << conf.server.port << std::endl;
-    //     std::cout << "Name: " << conf.server.name << std::endl;
-    //     std::cout << "Root: " << conf.server.root << std::endl;
-    //     std::cout << "Index: " << conf.server.index << std::endl;
-    //     std::cout << "Max Body Size: " << conf.server.max_body_size << std::endl;
-
-    //     std::cout << "\n=== ERROR PAGES ===" << std::endl;
-    //     for (std::map<int, std::string>::const_iterator it = conf.err_pages.begin(); it != conf.err_pages.end(); ++it)
-    //         std::cout << it->first << ": " << it->second << std::endl;
-
-    //     std::cout << "\n=== LOCATIONS ===" << std::endl;
-    //     for (size_t i = 0; i < conf.locations.size(); ++i)
-    //     {
-    //         std::cout << "\nLocation " << i << ":" << std::endl;
-    //         std::cout << "  Path: " << conf.locations[i].path << std::endl;
-    //         std::cout << "  Root: " << conf.locations[i].root << std::endl;
-    //         std::cout << "  Index: " << conf.locations[i].index << std::endl;
-    //         std::cout << "  Autoindex: " << conf.locations[i].auto_idx << std::endl;
-    //         std::cout << "  CGI: " << conf.locations[i].cgi << std::endl;
-    //         std::cout << "  Methods:\n  GET: " << conf.locations[i].methods[GET] << "\tPOST: " << conf.locations[i].methods[GET] << std::endl;
-    //     }
-    // }
+    // print_conf(conf);
 }
