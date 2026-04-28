@@ -19,12 +19,12 @@ void write_request_to_file(const std::string &filename)
     std::ofstream file(filename.c_str());
     if (!file.is_open())
         throw std::runtime_error("Cannot open file: " + filename);
-    
-    file << "GET /index.html HTTP/1.1\r\n";
-    file << "Host: localhost:8080\r\n";
-    file << "User-Agent: curl/7.64.1\r\n";
-    file << "content_length: 124\r\n";
-    file << "\r\nbooooooooooooooooooooooooooooooooooooooooooooooody";
+		
+		file << "POST /index.html HTTP/1.1\r\n";
+		file << "Host: localhost:8080\r\n";
+		file << "User-Agent: curl/7.64.1\r\n";
+		file << "Content-Length: 124\r\n";
+		file << "\r\n";
     
     file.close();
 }
@@ -44,13 +44,14 @@ void print_request(const Request &req)
     std::cout << "Target:" << req.getTarget() << std::endl;
     std::cout << "Version:" << req.getVersion() << std::endl;
     
-    std::cout << "\n--- Headers ---" << std::endl;
+    std::cout << "--- Headers ---" << std::endl;
 	strstrMap tmp = req.getHeaders();
 	for (strstrMap::const_iterator it = tmp.begin(); it != tmp.end(); ++it)
         std::cout << it->first << ":" << it->second << std::endl;
     
     std::cout << "\n--- Body ---" << std::endl;
     std::cout << req.getBody() << std::endl;
+	std::cout << "state: " << req.getState() << std::endl;
 }
 
 int	main(int ac, char **av)
@@ -64,15 +65,22 @@ int	main(int ac, char **av)
 		return (1);
 	parseConf(conf, file);
 	ssize_t b_size = 0;
-	char    buffer[10];
+	char    buffer[500];
 	// std::string request;
 	Request	request;
 	write_request_to_file("request.txt");
 	int fd = open("request.txt", O_RDONLY);
-	while ((b_size = read(fd, buffer, 10)) > 0) 
+	while ((b_size = read(fd, buffer, 500)) > 0) 
 	{
-		buffer[b_size]=0;
+		buffer[b_size]='\0';
 		request.parse_request(std::string(buffer));
+		if (request.getState() == BAD_REQUEST)
+		{
+			std::cout << "bad reuqest\n";
+			return (1); // send REsponse with Error_code
+		}
+		if (request.getState() == COMPLETE || request.getState() == BAD_REQUEST)
+			request.process(conf);
 	}
 	print_request(request);
 }

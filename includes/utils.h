@@ -8,6 +8,7 @@
 #include <exception>
 #include <unistd.h>
 #include <fcntl.h>
+#include <cctype>
 
 typedef std::map<std::string, std::string> strstrMap;
 typedef std::map<int, bool> intboolMap;

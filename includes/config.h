@@ -5,8 +5,8 @@
 
 typedef enum s_token
 {
-    SERVER = 1,
-    ERR_PAGE,
+    ERR_PAGE = 1,
+    SERVER,
     LOCATION,
     PORT,
     S_NAME,
