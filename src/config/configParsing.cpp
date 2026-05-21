@@ -1,5 +1,54 @@
 #include "webserv.h"
 
+bool valid_ip(std::string &ip)
+{
+    int count = 0;
+    size_t i = 0;
+    for (i = 0;i < ip.size();++i)
+        if (ip[i] == '.')
+            count++;
+    if (count != 3)
+        return false;
+    count = 0;
+    for (i = 0;i < ip.size();++i)
+    {
+        if (!isdigit(static_cast<unsigned char>(ip[i])))
+            return false;
+        int num = 0;
+        for (;i < ip.size() && ip[i] != '.' && num < 300;++i)
+        {
+            if (!isdigit(static_cast<unsigned char>(ip[i])))
+               return false;
+            num = num * 10 + (ip[i] - '0');
+        }
+        if (num > 255 || num < 0)
+            return false;
+        count++;
+    }
+    return (count == 4);
+}
+
+bool valid_ip_port(t_server &server)
+{
+    size_t pos = server.listen.find(":");
+    if (pos == std::string::npos)
+        return false;
+    server.ip = server.listen.substr(0, pos);
+    server.port = 0;
+    if (pos + 1 >= server.listen.size())
+        return false;
+    std::string tmp = server.listen.substr(pos + 1);
+    for (size_t i = 0; i < tmp.size() && server.port < 50000 ;++i)
+    {
+        if (!isdigit(static_cast<unsigned char>(tmp[i])))
+            return false;
+        server.port = server.port * 10 + (tmp[i] - '0');
+    }
+    if (server.port < 1024 || server.port > 49151)
+        return false;
+    return (valid_ip(server.ip));
+}
+
 std::string parse_server(t_configuration &conf, std::ifstream &file, std::string &line)
 {
     t_server      serv;
@@ -9,17 +58,16 @@ std::string parse_server(t_configuration &conf, std::ifstream &file, std::string
     
     if (line != "server")
         throw ConfigException("Invalid Conf: " + line );
-    if (!std::getline(file, line) || line != "{")
+    if (!std::getline(file, line) || line.find("{") == std::string::npos || line.empty())
         throw ConfigException("Invalid Conf");
+    serv.max_body_size = 0;
     while(std::getline(file, line) && !line.empty())
     {
         idx = parseTokenValue(line, token, value, SERVER);
         switch (idx)
         {
             case PORT:
-                serv.port = value;break;
-            case S_NAME:
-                serv.name = value;break;
+                serv.listen = value;break;
             case ROOT:
                 serv.root = value;break;
             case C_MAX_SIZE:
@@ -28,16 +76,18 @@ std::string parse_server(t_configuration &conf, std::ifstream &file, std::string
                 if (errno == ERANGE)
                     throw ConfigException("Invalid body size: " + line);
                 break;
-            case IDX:
-                serv.index = value;break;
             case 0:
                 break;
             default:
                 throw ConfigException("Invalid Configuration Token at server: " + line);
         }
     }
-    conf.servers[serv.port] = serv;
-    return serv.port;
+    conf.servers[serv.listen] = serv;
+    if (!serv.max_body_size)
+        throw ConfigException("Invalid configuration, missing client_max_body_size");
+    if (!valid_ip_port(conf.servers[serv.listen]))
+        throw ConfigException("Invalid server ip:port: " + serv.listen);
+    return serv.listen;
 }
 
 void    parse_err_pages(std::map<int, std::string> &map, std::ifstream &file, std::string &line)
@@ -100,7 +150,6 @@ void    parse_location(t_server &server, std::ifstream &file, std::string &line)
     server.locations[loc.alias] = loc;
 }
 
-
 void    print_conf(t_configuration &conf);
 
 void	parseConf(t_configuration &conf, std::ifstream &file)
@@ -110,31 +159,32 @@ void	parseConf(t_configuration &conf, std::ifstream &file)
     int         idx;
 
     try{
+        std::getline(file, line);
+        std::string port = parse_server(conf, file, line);
         while (std::getline(file, line)){
-            std::string port = parse_server(conf, file, line);
-            while (std::getline(file, line)){
-                non_tab = line.find_first_not_of('\t');
-                if (non_tab != 1) //accept or reject empty lines ? 
-                    throw ConfigException("Invalid Config format wrong indentation at: " + line);
-                idx = valid_token(line, 0);
-                if (idx == ERR_PAGE)
-                    parse_err_pages(conf.servers[port].err_pages, file, line);
-                else if (idx == LOCATION)
-                    parse_location(conf.servers[port], file, line);
-                else if (idx == 0)
-                    continue ;
-                else
+            non_tab = line.find_first_not_of('\t');
+            if (non_tab != 1)
+                throw ConfigException("Invalid Config format missing indentation at: " + line);
+            idx = valid_token(line, 0);
+            switch (idx) {
+                case ERR_PAGE:
+                    parse_err_pages(conf.servers[port].err_pages, file, line);break;
+                case LOCATION:
+                    parse_location(conf.servers[port], file, line);break;
+                case 0:break;
+                default:
                     throw ConfigException("Invalid token at:" + line);
-                if (line.find("}") != std::string::npos)
-                    break ;
             }
-            if (line != "}")
-                throw ConfigException("Invalid config missing '}' at:");
+            if (line.find("}") != std::string::npos)
+                break ;
         }
+        std::cout << line <<"--";
+        if (line.find("}") == std::string::npos || std::getline(file, line))
+            throw ConfigException("Invalid config file: " + line);
     }
     catch(std::exception &e){
         file.close();
-        std::cerr << "An exception occured: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         exit(1);
     }
     file.close();
@@ -146,10 +196,9 @@ void    print_conf(t_configuration &conf)
     for (std::map<std::string, t_server>::const_iterator server_it = conf.servers.begin(); server_it != conf.servers.end(); ++server_it)
     {
         std::cout << "=== SERVER ===" << std::endl;
-        std::cout << "Port: " << server_it->second.port << std::endl;
-        std::cout << "Name: " << server_it->second.name << std::endl;
+        std::cout << "Port: " << server_it->second.listen << std::endl;
+        // std::cout << "Name: " << server_it->second.name << std::endl;
         std::cout << "Root: " << server_it->second.root << std::endl;
-        std::cout << "Index: " << server_it->second.index << std::endl;
         std::cout << "Max Body Size: " << server_it->second.max_body_size << std::endl;
 
         std::cout << "\n=== ERROR PAGES ===" << std::endl;

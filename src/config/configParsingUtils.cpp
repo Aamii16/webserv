@@ -1,6 +1,5 @@
 #include "config.h"
 
-
 int    valid_token(std::string line, int block)
 {
     std::string         token;
@@ -20,10 +19,12 @@ int    valid_token(std::string line, int block)
     {
         if (token == "listen")
             return PORT;
-        if (token == "server_name")
-            return S_NAME;
-        if (token == "client_max_body_size")
+        else if (token == "root")
+            return ROOT;
+        else if (token == "client_max_body_size")
             return C_MAX_SIZE;
+        else
+            return -1;
     }
     if (token == "root")
         return ROOT;
@@ -47,8 +48,13 @@ int parseTokenValue(std::string line, std::string &token, std::string &value, in
     std::stringstream ss(line);
     size_t  non_tab = line.find_first_not_of('\t');
 
+    if (line.find("}") != std::string::npos)
+        return 0;
     ss >> token;
-    value = line.substr(non_tab + token.size() + 1);
+    if (line.size() > non_tab + token.size() + 1)
+        value = line.substr(non_tab + token.size() + 1);
+    else
+        throw ConfigException("Invalid Config at: ");
     if (!token.empty())
     {
         if (block == SERVER && non_tab != 1)
@@ -74,7 +80,7 @@ void    parse_redir(location &loc, std::string &line)
     ss >> val;
     for (size_t i = 0; i < token.size(); ++i)
     {
-        if (!std::isdigit(token[i]))
+        if (!std::isdigit(static_cast<unsigned char>(token[i])))
             throw ConfigException("Invalid status code at: " + line);
     }
     key = std::strtol(token.c_str(), NULL, 10);
