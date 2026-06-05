@@ -14,9 +14,9 @@ typedef enum s_token
 	SERVER,
 	LOCATION,
 	PORT,
-	S_NAME,
 	ROOT,
 	PATH,
+	UPLOAD_PATH,
 	C_MAX_SIZE,
 	IDX,
 	AUTO_IDX,
@@ -24,6 +24,7 @@ typedef enum s_token
 	GET,
 	POST,
 	DELETE,
+	UNKNOWN_METHOD,
 	REDIR,
 	CGI,
 	PHP,
@@ -31,10 +32,10 @@ typedef enum s_token
 	PY
 }   token;
 
-// enum s_status_code
+// enum s_status_code_code
 // {
 
-// }   status_code;
+// }   status_code_code;
 
 class ConfigException : public std::exception
 {
@@ -70,12 +71,12 @@ typedef std::map<std::string, location> strlocationMap;
 
 typedef struct s_server
 {
-	std::string						port;
-	std::string						name;
+	std::string						listen;
+	std::string						ip;
+	int								port;
 	std::string						root;
-	std::string						index;
 	long       						max_body_size;
-	std::map<int, std::string>		err_pages;	
+	intstrMap						err_pages;	
 	std::map<std::string, location>	locations;
 }   t_server;	
 

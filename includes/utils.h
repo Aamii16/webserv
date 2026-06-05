@@ -9,10 +9,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cctype>
+#include "config.h"
+#include <sys/stat.h>
+#include <climits>
 
-typedef std::map<std::string, std::string> strstrMap;
-typedef std::map<int, bool> intboolMap;
-typedef std::map<int, std::string> intstrMap;
-typedef std::map<std::string, int> strintMap;
 
 void	p_error(std::string err);

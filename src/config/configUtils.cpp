@@ -30,6 +30,8 @@ int    valid_token(std::string line, int block)
         return ROOT;
     else if (token == "path")
         return PATH;
+    else if (token == "upload_path")
+        return UPLOAD_PATH;
     else if (token == "index")
         return IDX;
     else if (token == "autoindex")
@@ -81,11 +83,11 @@ void    parse_redir(location &loc, std::string &line)
     for (size_t i = 0; i < token.size(); ++i)
     {
         if (!std::isdigit(static_cast<unsigned char>(token[i])))
-            throw ConfigException("Invalid status code at: " + line);
+            throw ConfigException("Invalid status_code code at: " + line);
     }
     key = std::strtol(token.c_str(), NULL, 10);
     if (!key || errno == ERANGE || val.empty())
-        throw ConfigException("Invalid status code at: " + line);
+        throw ConfigException("Invalid status_code code at: " + line);
     loc.return_directive[key] = val;
 }
 

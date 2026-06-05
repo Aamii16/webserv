@@ -141,6 +141,9 @@ void    parse_location(t_server &server, std::ifstream &file, std::string &line)
             case METHODS:
                 set_methods(loc.methods, value);
                 break;
+            case UPLOAD_PATH:
+                loc.upload_path = value;
+                 break;
             case 0:
                 break;
             default:
@@ -188,7 +191,7 @@ void	parseConf(t_configuration &conf, std::ifstream &file)
         exit(1);
     }
     file.close();
-    print_conf(conf);
+    // print_conf(conf);
 }
 
 void    print_conf(t_configuration &conf)
@@ -210,6 +213,7 @@ void    print_conf(t_configuration &conf)
         {
             std::cout << "\nLocation:" << std::endl;
             std::cout << "  Path: " << loc_it->second.alias << std::endl;
+            std::cout << "  Upload Path: " << loc_it->second.upload_path << std::endl;
             std::cout << "  Root: " << loc_it->second.root << std::endl;
             std::cout << "  Index: " << loc_it->second.index << std::endl;
             std::cout << "  Autoindex: " << loc_it->second.auto_idx << std::endl;

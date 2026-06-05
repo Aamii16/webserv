@@ -1,5 +1,5 @@
-#include "httpResponse.hpp"
-
+#include "Response.hpp"
+#include "webserv.h"
 
 void	Request::parse_token_value(std::string &line, std::string &token, std::string &value, std::string delimiter)
 {
@@ -9,25 +9,32 @@ void	Request::parse_token_value(std::string &line, std::string &token, std::stri
 	token = line.substr(0, pos);
 	if (pos + delimiter.size() > line.size())
 		throw BAD_REQUEST;
-	line = line.substr(pos + delimiter.size());
-	value = line;
-	if (token.empty() || value.empty())
-		throw BAD_REQUEST;
-	if (line.find(": ") != std::string::npos)
-		throw BAD_REQUEST;
-
+	value = line.substr(pos + delimiter.size());
 }
+
+int	has_whitespace(std::string &str)
+{
+	for (size_t i = 0; i < str.size();++i)
+	{
+		if (isspace(str[i]))
+			return 1;
+	}
+	return 0;
+}
+
 
 static void	valid_request_line(int	&method, std::string &target, std::string &version)
 {
+	if (has_whitespace(target) || target.empty() || version.empty() || target[0] != '/')
+		throw BAD_REQUEST;
 	if (!method)
 		throw METHOD_NOT_ALLOWED;
 	if (target.size() > MAX_URI_LENGTH)
 		throw URI_TOO_LONG;
 	if (version != "HTTP/1.1" && version != "HTTP/1.0")
 		throw UNSUPPORTED_HTTP;
-	
 }
+
 
 static int	valid_header(std::string &key, std::string &value)
 {
@@ -36,12 +43,12 @@ static int	valid_header(std::string &key, std::string &value)
 	for(idx = 0; idx < key.size();++idx)
 	{
 		if (!isalnum(key[idx]) && key[idx] != '-')
-			return 0;
+			throw BAD_REQUEST;
 	}
 	for (idx = 0;idx < value.size();++idx)
 	{
 		if (value[idx] < 32 || value[idx] > 126)
-			return 0;
+			throw BAD_REQUEST;
 	}
 	if (key.size() > 256 || value.size() > MAX_HEADER_FIELD_LENGTH)
 		throw HEADER_FIELD_TOO_LARGE;
@@ -49,9 +56,10 @@ static int	valid_header(std::string &key, std::string &value)
 	{
 		for(size_t i = 0;i < value.size(); ++i)
 		{
-			if (!isdigit(value[i]))
+			if (!isdigit(static_cast<unsigned char>(value[i])))
 				throw BAD_REQUEST;
 		}
+		
 	}
 	return 1;
 }
@@ -69,6 +77,8 @@ void	Request::parse_request_line(std::string &line)
 		method = POST;
 	else if (token == "DELETE")
 		method = DELETE;
+	else
+		method = UNKNOWN_METHOD;
 	valid_request_line(method, target, version);
 	if ((pos = target.find("?")) != std::string::npos)
 		parse_token_value(target, target, query, "?");
@@ -88,19 +98,18 @@ void	Request::parse_header(std::string header)
 		line = header.substr(0, pos);
 		if (line.empty())
 		{
-			std::cout << "REACHED BODY\n";
 			state = BODY;
 			break ;
-		}
+		}	
 		if (state == REQ_LINE)
 			parse_request_line(line);
 		else if (valid_header(token, value))
 		{
 			parse_token_value(line, token, value, ": ");
+			if (token.empty() || has_whitespace(token) || !headers[token].empty())
+				throw BAD_REQUEST;
 			headers[token] = value;
 		}
-		if (line.find(" ") != std::string::npos)
-			throw BAD_REQUEST;
 		if (header.size() > pos + 2)
 			header = header.substr(pos + 2);
 		else
@@ -109,13 +118,25 @@ void	Request::parse_header(std::string header)
 }
 
 
-void	Request::parse_body()
+void	Request::parse_body(const size_t &max_body_size)
 {
-	if(getContentLength() == 0 || method != POST || r_buffer.empty())
+	if(method != POST || r_buffer.empty())
 	{
 		state = COMPLETE;
 		return ;
 	}
+	if (headers.find("Content-Type") == headers.end())
+		throw BAD_REQUEST;
+	if (headers.find("Content-Length") == headers.end())
+		throw LENGTH_REQUIRED;
+	setContentLength();
+	if (!content_length)
+	{
+		state = COMPLETE;
+		return ;
+	}
+	if (content_length > max_body_size)
+		throw PAYLOAD_TOO_LARGE;
 	size_t	idx;
 	for (idx = 0; idx < r_buffer.size(); idx++)
 	{
@@ -130,3 +151,4 @@ void	Request::parse_body()
 	if (body.size() != content_length)
 		r_buffer = "";
 }
+
