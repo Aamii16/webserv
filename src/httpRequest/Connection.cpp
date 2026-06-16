@@ -5,11 +5,11 @@ void print_request(const Request &req)
 {
     std::cout << "=== HTTP REQUEST ===" << std::endl;
 	std::string method_str;
-	if (req.getMehod() == GET)
+	if (req.getMethod() == GET)
 		method_str = "GET";
-	else if (req.getMehod() == POST)
+	else if (req.getMethod() == POST)
 		method_str = "POST";
-	else if (req.getMehod() == DELETE)
+	else if (req.getMethod() == DELETE)
 		method_str = "DELETE";
 	// etc
 	std::cout << "Method:" << method_str << std::endl;
@@ -27,91 +27,121 @@ void print_request(const Request &req)
 
 Connection::Connection(int fd): fd(fd){}
 
-void Connection::process(const t_server &server, std::string buffer)
+std::string getStatusCodeMessage(int code)
+{
+	intstrMap messages;
+	if (messages.empty())
+	{
+		//success
+		messages[200] = "OK";
+		messages[201] = "Created";
+		messages[204] = "No Content";
+		messages[301] = "Moved Permanently";
+		messages[302] = "Found";
+		messages[304] = "Not Modified";
+		//errors
+		messages[400] = "Bad Request";
+		messages[403] = "Forbidden";
+		messages[404] = "Not Found";
+		messages[405] = "Method Not Allowed";
+		messages[408] = "Request Timeout";
+		messages[411] = "Length Required";
+		messages[413] = "Payload Too Large";
+		messages[414] = "URI Too Long";
+		messages[431] = "Header Field Too Large";
+		messages[500] = "Internal Server Error";
+		messages[501] = "Not Implemented";
+		messages[505] = "HTTP Version Not Supported";
+		messages[507] = "Insufficient Storage";
+	}
+	return messages[code];
+}
+
+
+std::string errpage(int code)
+{
+	std::string default_page = (
+		"<!DOCTYPE html>"
+		"<html lang=\"en\">"
+		"<head>"
+		"<meta charset=\"UTF-8\" />"
+		"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />"
+		"<script src=\"https://cdn.tailwindcss.com\"></script>"
+		"<title>Error</title>"
+		"</head>"
+		"<body class=\"bg-gray-200 text-center\">"
+		"<div class=\"mx-auto min-h-screen max-w-3xl bg-blue-100 py-10 border-l-4 border-r-4 border-black px-6\">"
+		"<h1 class=\"font-bold text-8xl\">") + num_to_str(code) + std::string("</h1>"
+		"<h1 class=\"font-bold text-5xl my-8\">") + getStatusCodeMessage(code) + std::string(
+		"</h1></div></body></html>"
+	);
+	return default_page;
+}
+
+std::string geterrpage(const t_server &server, int code)
+{
+	intstrMap::const_iterator it = server.err_pages.find(code);
+
+	if (it != server.err_pages.end())
+	{
+	std::ifstream file(it->second.c_str());
+		if (file.is_open())
+		{
+			std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+			file.close();
+			return content;
+		}		
+	}
+	return errpage(code);
+}
+
+void mkDate(std::string &date)
+{
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	char buf[100];
+	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &tm);
+	date = buf;
+}
+
+
+void Connection::setResponseHeaders(const t_server &server)
+{
+	std::string date;
+	response.setMessage();
+	mkDate(date);
+	response.setHeader("Date", date);
+}
+
+
+void Connection::process(t_server &server, std::string buffer)
 {
 	try{
 		request.parse_request(buffer, server.max_body_size);
-		request.handle_request(server);
+		if (request.getState() == COMPLETE)
+			handle_request(server);
+		else
+			return ;
+	
 	}
 	catch(err_codes &error){
-		std::cerr << "Error: " << error << std::endl;
+		std::cout << "caught error: " << getStatusCodeMessage(error) << std::endl;
 		response.setStatusCode(error);
-		switch (error)
-		{
-			case BAD_REQUEST:
-				std::cerr << "BAD_REQUEST";
-				break;
-			case FORBIDDEN:
-				std::cerr << "FORBIDDEN";
-				break;
-			case NOT_FOUND:
-				std::cerr << "NOT_FOUND";
-				break;
-			case METHOD_NOT_ALLOWED:
-				std::cerr << "METHOD_NOT_ALLOWED";
-				break;
-			case REQUEST_TIMEOUT:
-				std::cerr << "REQUEST_TIMEOUT";
-				break;
-			case URI_TOO_LONG:
-				std::cerr << "URI_TOO_LONG";
-				break;
-			case LENGTH_REQUIRED:
-				std::cerr << "LENGTH_REQUIRED";
-				break;
-			case PAYLOAD_TOO_LARGE:
-				std::cerr << "PAYLOAD_TOO_LARGE";
-				break;
-			case HEADER_FIELD_TOO_LARGE:
-				std::cerr << "HEADER_FIELD_TOO_LARGE";
-				break;
-			case INTERNAL_SERVER_ERROR:
-				std::cerr << "INTERNAL_SERVER_ERROR";
-				break;
-			case NOT_IMPLEMENTED:
-				std::cerr << "NOT_IMPLEMENTED";
-				break;
-			case UNSUPPORTED_HTTP:
-				std::cerr << "UNSUPPORTED_HTTP";
-				break;
-			default:
-				std::cerr << error;
-			std::cerr << std::endl;
-		}
+		response.setHeader("Content-Type", "text/html");
+		std::cout << "Error: " << getStatusCodeMessage(error) << std::endl;
 		// intstrMap::const_iterator it = server.err_pages.find(error);
 		// if (it != server.err_pages.end())
 		// 	response.setbody(it->second);
 		// else
 		// 	response.setbody(errpage(error));
 	}
-	catch(status_code &s){
-		response.setStatusCode(s);
-		std::cerr << "status code: ";
-		switch (s)
-		{
-			case OK:
-				std::cerr << "OK";
-				break;
-			case CREATED:
-				std::cerr << "CREATED";
-				break;
-			case NO_CONTENT:
-				std::cerr << "NO_CONTENT";
-				break;
-			case MOVED_PERMANENTLY:
-				std::cerr << "MOVED_PERMANENTLY";
-				break;
-			case FOUND:
-				std::cerr << "FOUND";
-				break;
-			case NOT_MODIFIED:
-				std::cerr << "NOT_MODIFIED";
-				break;
-			default:
-				std::cerr << s;
-		}
-		std::cerr << std::endl;
+	catch(status_code &status){
+		std::cout << "caught status: " << getStatusCodeMessage(status) << std::endl;
+		response.setStatusCode(status);
+		std::cout << "status code: " << getStatusCodeMessage(status) << std::endl;
 	}
+	std::cout << "=== bitch why ===" << std::endl;
+	setResponseHeaders(server);
 	print_request(request);
-
+	response.print_response();
 }

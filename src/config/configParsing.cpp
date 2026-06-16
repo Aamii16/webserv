@@ -87,6 +87,8 @@ std::string parse_server(t_configuration &conf, std::ifstream &file, std::string
         throw ConfigException("Invalid configuration, missing client_max_body_size");
     if (!valid_ip_port(conf.servers[serv.listen]))
         throw ConfigException("Invalid server ip:port: " + serv.listen);
+    // update the upload counter for this server in case of a restart to avoid overwriting existing files
+    update_counter(conf.upload_counter_file, conf.servers[serv.listen].upload_counter, 'r');
     return serv.listen;
 }
 
@@ -160,6 +162,7 @@ void	parseConf(t_configuration &conf, std::ifstream &file)
     std::string line;
     size_t      non_tab;
     int         idx;
+    conf.upload_counter_file = "upload_counter.txt";
 
     try{
         std::getline(file, line);
@@ -181,7 +184,6 @@ void	parseConf(t_configuration &conf, std::ifstream &file)
             if (line.find("}") != std::string::npos)
                 break ;
         }
-        std::cout << line <<"--";
         if (line.find("}") == std::string::npos || std::getline(file, line))
             throw ConfigException("Invalid config file: " + line);
     }

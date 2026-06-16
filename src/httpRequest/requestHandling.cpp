@@ -57,41 +57,17 @@ void	normalise_target(std::string &target)
 		target.erase(pos, 1);
 }
 
-
-void update_counter(const char *name, unsigned int &count, int flag) // flag is used to determine whether to read/update counter from file, or t o write update counter on the file
+std::string  mkfile(unsigned int file_counter, const std::string &extension)
 {
-	std::fstream file;
-
-	if (flag == 'r')
-	{
-		file.open(name, std::ios::in);
-		if (file.is_open())
-		{
-			file >> count;
-			file.close();
-		}
-		else
-			count = 0;
-	}
-	else if (flag == 'w')
-	{
-		file.open(name, std::ios::out | std::ios::trunc);
-		if (file.is_open())
-		{
-			file << count;
-			file.close();
-		}
-	}
-}
-
-std::string  mkfile(const std::string &extension)
-{
-	static unsigned int count;
-	static std::string prefix = "uploaded_";
+	std::string prefix = "uploaded_";
 	std::string name;
-	
-	update_counter("upload_counter", count, 'r');
-	// This is to handle the case when the counter reaches its maximum value and wraps around to 0, which could lead to overwriting existing files. By appending underscores to the prefix, we can create a new namespace for the file names, allowing us to continue generating unique file names even after the counter resets.
+	std::string postfix;
+	std::stringstream ss;
+
+	// This is to handle the case when the counter reaches its maximum value
+	// and wraps around to 0, which could lead to overwriting existing files. By appending underscores to the prefix, 
+	//we can create a new namespace for the file names, allowing us to continue generating unique file names even after
+	// the counter resets.
 	// if (count == UINT_MAX)
 	// {
 	// 	count = 0;
@@ -102,16 +78,15 @@ std::string  mkfile(const std::string &extension)
 	// 	idx++;
 	// 	update_counter("upload_idxcounter", count, 'w');
 	// }	might just delete this
-	std::string postfix;
-	std::stringstream ss;
-	ss << count++;
+	
+	// i don't like this file_counter appraoch , it's not very efficient
+	ss << file_counter++;
 	ss >> postfix;
 	name = prefix + postfix + get_extension(extension);
-	update_counter("upload_counter", count, 'w');
 	return name;
 }
 
-void	handle_post(const Request &req, const std::string &resolvedpath, const location &loc)
+void	Connection::handle_post(const location &loc, unsigned int &upload_counter)
 {
 	std::string name;
 	struct stat st;
@@ -123,7 +98,7 @@ void	handle_post(const Request &req, const std::string &resolvedpath, const loca
 	if (!S_ISDIR(st.st_mode))
 		throw FORBIDDEN;
 	errno = 0;
-	name = mkfile(req.getHeaderValue("Content-Type"));
+	name = mkfile(upload_counter, request.getHeaderValue("Content-Type"));
 	int fd = open((loc.upload_path + "/" + name).c_str(), O_WRONLY | O_CREAT, 0644);
 	if (fd == -1 && errno == EACCES)
 		throw FORBIDDEN;
@@ -131,20 +106,29 @@ void	handle_post(const Request &req, const std::string &resolvedpath, const loca
 		throw INSUFFICIENT_STORAGE;
 	else if (fd == -1)
 		throw INTERNAL_SERVER_ERROR;
-	write(fd, req.getBody().c_str(), req.getBody().size());
+	upload_counter++;
+	write(fd, request.getBody().c_str(), request.getBody().size());
 	close(fd);
+	std::string location_header;
+	if (loc.alias[loc.alias.size() - 1] == '/')
+		location_header = loc.alias + name;
+	else
+		location_header = loc.alias + "/" + name;
+	response.setHeader("Location", location_header);	
 	throw CREATED;
 }
 
-
-void     Request::handle_request(const t_server &server)
+void     Connection::handle_request(t_server &server)
 {
 	strlocationMap::const_iterator it = server.locations.begin();
-	if (headers.find("Host") == headers.end())
+	std::string target = request.getTarget();
+
+	if (request.getHeaderValue("Host").empty())
 		throw BAD_REQUEST;
-	if (method == POST)
-		target += "/";
+	if (request.getMethod() == POST)
+		request.getTarget() += "/";
 	normalise_target(target);
+	request.setTarget(target);
 	for (;it != server.locations.end();++it){
 		if (target.size() >= it->first.size() && !target.compare(0, it->first.size(), it->first) &&
 			(target.size() == it->first.size() || target[it->first.size()] == '/'))
@@ -155,15 +139,17 @@ void     Request::handle_request(const t_server &server)
 	if (it == server.locations.end())
 		throw NOT_FOUND;
 	// if (!it->second.return_directive.empty())
-	// 	redirection();
+		// 	redirection();
+	if (!it->second.methods.at(request.getMethod()))
+		throw METHOD_NOT_ALLOWED;
 	std::string path = (!it->second.root.empty() ? it->second.root : server.root) + "/" + target.substr(it->first.size());
-	switch (method)
+	switch (request.getMethod())
 	{
 		case GET:
 			// handle_get(path);
 			break;
 		case POST:
-			handle_post(*this, path, it->second);
+			handle_post(it->second, server.upload_counter);
 			break;
 		case DELETE:
 			// handle_delete(path);

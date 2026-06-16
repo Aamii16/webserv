@@ -78,22 +78,28 @@ typedef struct s_server
 	long       						max_body_size;
 	intstrMap						err_pages;	
 	std::map<std::string, location>	locations;
-}   t_server;	
+	// upload counter to generate unique file names for uploads, stored in a file to persist across server restarts
+	unsigned int 					upload_counter;
+}   t_server;
 
 
 
 typedef struct s_configuration
 {
 	std::map<std::string, t_server>	servers; // key == port number
-
+	std::string						upload_counter_file;
 }	t_configuration;
 
 
-//utils
+// parsing utils
 int		valid_token(std::string line, int block);
 int		parseTokenValue(std::string line, std::string &token, std::string &value, int block);
 void	parse_redir(location &loc, std::string &line);
 void	set_methods(intboolMap &map, std::string &meths);
 void	set_cgi(strstrMap &map, std::string &cgi);
 
+// save and update the upload counter to generate unique file names for uploads, stored in a file to persist across server restarts
+void	update_counter(const std::string &name, unsigned int &counter, int flag);
+
 void	parseConf(t_configuration &conf, std::ifstream &file);
+

@@ -116,7 +116,7 @@ void    set_cgi(strstrMap &map, std::string &cgi)
     std::string key;
     std::string value;
     std::stringstream   ss(cgi);
-    // ss >> cgi;
+    // ss >> cgi; // why did i comment this out? it was to skip the "cgi" token but i already do that in parseTokenValue so it was redundant
     ss >> key;
     if (key != ".py" && key != ".php" && key != ".js")
         throw ConfigException("Invalid cgi extension");
@@ -124,4 +124,32 @@ void    set_cgi(strstrMap &map, std::string &cgi)
     map[key] = value;
     if (map[key].empty())
         throw ConfigException("Invalid cgi extension");
+}
+
+void update_counter(const std::string &name, unsigned int &counter, int flag)
+{
+	std::fstream file;
+
+	if (flag == 'r')
+	{
+		file.open(name.c_str(), std::ios::in);
+		if (file.is_open())
+		{
+			file >> counter;
+            file.close();
+		}
+		else
+			counter = 0;
+	}
+	else if (flag == 'w')
+	{
+		file.open(name.c_str(), std::ios::out | std::ios::trunc);
+		if (file.is_open())
+		{
+			file << counter;
+			file.close();
+		}
+        else
+            std::cerr << "Unable to open counter file for writing: " << name << std::endl;
+	}
 }

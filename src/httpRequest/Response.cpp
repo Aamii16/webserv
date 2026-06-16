@@ -42,7 +42,22 @@ void	Response::setMessage()
 		messages[505] = "HTTP Version Not Supported";
 	}
 	message = messages[status];
+};
+
+void Response::print_response()const
+{
+	std::cout << "=== HTTP RESPONSE ===" << std::endl;
+	std::cout << "Status: " << status << " " << message << std::endl;
+	std::cout << "Version: " << version << std::endl;
+	std::cout << "--- Headers ---" << std::endl;
+	strstrMap tmp = headers;
+	for (strstrMap::const_iterator it = tmp.begin(); it != tmp.end(); ++it)
+		std::cout << it->first << ":" << it->second << std::endl;
+	
+	std::cout << "\n--- Body ---" << std::endl;
+	std::cout << body << std::endl;
 }
 
-void	Response::setHeader(std::string &key, std::string &value){headers[key] = value;}
+void	Response::setHeader(std::string key, std::string value){headers[key] = value;}
+
 

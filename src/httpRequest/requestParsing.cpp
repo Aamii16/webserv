@@ -31,7 +31,7 @@ static void	valid_request_line(int	&method, std::string &target, std::string &ve
 		throw METHOD_NOT_ALLOWED;
 	if (target.size() > MAX_URI_LENGTH)
 		throw URI_TOO_LONG;
-	if (version != "HTTP/1.1" && version != "HTTP/1.0")
+	if (version != "HTTP/1.1" && version != "HTTP/1.0") // might wanna change this to 1.1 only
 		throw UNSUPPORTED_HTTP;
 }
 
@@ -85,7 +85,7 @@ void	Request::parse_request_line(std::string &line)
 	state = HEADERS;
 }
 
-void	Request::parse_header(std::string header)
+void	Request::parse_header(std::string &header)
 {
 	std::string	token, value, line;
 	size_t	pos = 0;
@@ -127,8 +127,6 @@ void	Request::parse_body(const size_t &max_body_size)
 	}
 	if (headers.find("Content-Type") == headers.end())
 		throw BAD_REQUEST;
-	if (headers.find("Content-Length") == headers.end())
-		throw LENGTH_REQUIRED;
 	setContentLength();
 	if (!content_length)
 	{
@@ -152,3 +150,27 @@ void	Request::parse_body(const size_t &max_body_size)
 		r_buffer = "";
 }
 
+void	Request::parse_request(std::string buffer, const size_t &max_body_size)
+{
+	r_buffer += buffer;
+	if (state == 0)
+		state = REQ_LINE;
+	if (state == REQ_LINE || state == HEADERS)
+	{
+		size_t pos = r_buffer.rfind("\r\n");
+		if (pos != std::string::npos)
+		{
+			parse_header(r_buffer);
+			// turns out im substringint twice (first in parse_header)
+			// this could be troublesome later
+			// if (r_buffer.size() > pos + 2)
+			// 	r_buffer = r_buffer.substr(pos + 2);
+			// else
+			// 	r_buffer = "";
+		}
+		else if (r_buffer.size() > MAX_HEADER_FIELD_LENGTH)
+			throw HEADER_FIELD_TOO_LARGE;
+	}
+	if (state == BODY)
+		parse_body(max_body_size);
+}
