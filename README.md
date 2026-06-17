@@ -28,9 +28,11 @@ multiplexing done (t9riban)
 
 remove errno checks
 
+client getters utils to be set after reading how request is processed
+
 need to finish the client destroyer and delete in coreserver
 
-update clients map 
+update clients map
 
 figure out efficient way to navigate into request sockets in buffer for reading 
 
