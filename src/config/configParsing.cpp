@@ -231,11 +231,10 @@ void    print_conf(t_configuration &conf)
             mit = loc_it->second.methods.find(DELETE);
             if (mit != loc_it->second.methods.end() && mit->second)
                 std::cout << "    DELETE" << std::endl;
-            if (!loc_it->second.return_directive.empty())
+            if (!loc_it->second.redirection.second.empty())
             {
                 std::cout << "  Return Directives:" << std::endl;
-                for (std::map<int, std::string>::const_iterator rit = loc_it->second.return_directive.begin(); rit != loc_it->second.return_directive.end(); ++rit)
-                    std::cout << "    " << rit->first << " -> " << rit->second << std::endl;
+                std::cout << "    " << loc_it->second.redirection.first << " -> " << loc_it->second.redirection.second << std::endl;
             }
             if (loc_it->second.cgi)
             {

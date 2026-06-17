@@ -27,37 +27,6 @@ void print_request(const Request &req)
 
 Connection::Connection(int fd): fd(fd){}
 
-std::string getStatusCodeMessage(int code)
-{
-	intstrMap messages;
-	if (messages.empty())
-	{
-		//success
-		messages[200] = "OK";
-		messages[201] = "Created";
-		messages[204] = "No Content";
-		messages[301] = "Moved Permanently";
-		messages[302] = "Found";
-		messages[304] = "Not Modified";
-		//errors
-		messages[400] = "Bad Request";
-		messages[403] = "Forbidden";
-		messages[404] = "Not Found";
-		messages[405] = "Method Not Allowed";
-		messages[408] = "Request Timeout";
-		messages[411] = "Length Required";
-		messages[413] = "Payload Too Large";
-		messages[414] = "URI Too Long";
-		messages[431] = "Header Field Too Large";
-		messages[500] = "Internal Server Error";
-		messages[501] = "Not Implemented";
-		messages[505] = "HTTP Version Not Supported";
-		messages[507] = "Insufficient Storage";
-	}
-	return messages[code];
-}
-
-
 std::string errpage(int code)
 {
 	std::string default_page = (
@@ -72,7 +41,7 @@ std::string errpage(int code)
 		"<body class=\"bg-gray-200 text-center\">"
 		"<div class=\"mx-auto min-h-screen max-w-3xl bg-blue-100 py-10 border-l-4 border-r-4 border-black px-6\">"
 		"<h1 class=\"font-bold text-8xl\">") + num_to_str(code) + std::string("</h1>"
-		"<h1 class=\"font-bold text-5xl my-8\">") + getStatusCodeMessage(code) + std::string(
+		"<h1 class=\"font-bold text-5xl my-8\">") + getCodeMessage(code) + std::string(
 		"</h1></div></body></html>"
 	);
 	return default_page;
@@ -108,9 +77,23 @@ void mkDate(std::string &date)
 void Connection::setResponseHeaders(const t_server &server)
 {
 	std::string date;
+
+	response.setVersion(request.getVersion());
 	response.setMessage();
+	
+	if (!response.getBody().empty())
+		response.setHeader("Content-Type", request.getHeaderValue("Content-Type"));
+	response.setHeader("Content-Length", num_to_str(response.getBody().size()));
+	if (!request.getHeaderValue("Connection").empty())
+		response.setHeader("Connection", request.getHeaderValue("Connection"));
+	else if (request.getVersion() == "HTTP/1.1")
+		response.setHeader("Connection", "keep-alive");
+	else
+		response.setHeader("Connection", "close");
+	// close connectioon if status >= 400 , nt sure about this
 	mkDate(date);
 	response.setHeader("Date", date);
+	// i can't set server header cause i deleted server-name frm config and im too lazy t add it back
 }
 
 
@@ -122,13 +105,11 @@ void Connection::process(t_server &server, std::string buffer)
 			handle_request(server);
 		else
 			return ;
-	
 	}
 	catch(err_codes &error){
-		std::cout << "caught error: " << getStatusCodeMessage(error) << std::endl;
 		response.setStatusCode(error);
 		response.setHeader("Content-Type", "text/html");
-		std::cout << "Error: " << getStatusCodeMessage(error) << std::endl;
+		std::cout << "Error Code: " << response.getMessage() << std::endl;
 		// intstrMap::const_iterator it = server.err_pages.find(error);
 		// if (it != server.err_pages.end())
 		// 	response.setbody(it->second);
@@ -136,9 +117,8 @@ void Connection::process(t_server &server, std::string buffer)
 		// 	response.setbody(errpage(error));
 	}
 	catch(status_code &status){
-		std::cout << "caught status: " << getStatusCodeMessage(status) << std::endl;
 		response.setStatusCode(status);
-		std::cout << "status code: " << getStatusCodeMessage(status) << std::endl;
+		std::cout << "status code: " << response.getMessage() << std::endl;
 	}
 	std::cout << "=== bitch why ===" << std::endl;
 	setResponseHeaders(server);

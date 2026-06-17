@@ -88,7 +88,7 @@ void    parse_redir(location &loc, std::string &line)
     key = std::strtol(token.c_str(), NULL, 10);
     if (!key || errno == ERANGE || val.empty())
         throw ConfigException("Invalid status_code code at: " + line);
-    loc.return_directive[key] = val;
+    loc.redirection = std::make_pair(key, val);
 }
 
 void    set_methods(intboolMap &map, std::string &meths)

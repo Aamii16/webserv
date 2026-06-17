@@ -107,7 +107,10 @@ void	Connection::handle_post(const location &loc, unsigned int &upload_counter)
 	else if (fd == -1)
 		throw INTERNAL_SERVER_ERROR;
 	upload_counter++;
-	write(fd, request.getBody().c_str(), request.getBody().size());
+	if (write(fd, request.getBody().c_str(), request.getBody().size()) == -1){
+	    close(fd);
+	    throw INTERNAL_SERVER_ERROR;
+	}
 	close(fd);
 	std::string location_header;
 	if (loc.alias[loc.alias.size() - 1] == '/')
@@ -117,6 +120,8 @@ void	Connection::handle_post(const location &loc, unsigned int &upload_counter)
 	response.setHeader("Location", location_header);	
 	throw CREATED;
 }
+
+
 
 void     Connection::handle_request(t_server &server)
 {
@@ -138,11 +143,12 @@ void     Connection::handle_request(t_server &server)
 		it = server.locations.find("/");
 	if (it == server.locations.end())
 		throw NOT_FOUND;
-	// if (!it->second.return_directive.empty())
-		// 	redirection();
+	if (!it->second.redirection.second.empty())
+			response.redirect(it->second.redirection);
 	if (!it->second.methods.at(request.getMethod()))
 		throw METHOD_NOT_ALLOWED;
 	std::string path = (!it->second.root.empty() ? it->second.root : server.root) + "/" + target.substr(it->first.size());
+	// nigga ash kandir b had path 
 	switch (request.getMethod())
 	{
 		case GET:

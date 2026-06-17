@@ -20,4 +20,6 @@ i have to set response headers
 
 last modifications were lost, i wrote a note about status not working and it's not here
 
-i think al
+i think post is finished
+i also set response headers
+i'll work on redirections tomorrow
