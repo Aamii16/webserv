@@ -21,7 +21,8 @@ void Client::setState(ClientState state) { _state = state; }
 
 std::string& Client::getReadBuf()  { return _readBuf; }
 std::string& Client::getWriteBuf() { return _writeBuf; }
-    
+
+
 bool Client::wantWrite() const { return !_writeBuf.empty(); }
 
 ssize_t Client::recv()

@@ -93,13 +93,13 @@ void CoreServer::handleClientWrite(int fd)
     }
 }
 
-void CoreServer::closeClient(int fd)
+void CoreServer::closeClient(int fd) //delete epoll fd first
 {
     std::map<int, Client*>::iterator it = _clients.find(fd);
     if (it == _clients.end())
         return;
 
-    printf("Closing client fd=%d\n", fd);
+    printf("[CoreServer] Closing client fd=%d\n", fd);
 
     epollDel(fd);
     delete it->second;
