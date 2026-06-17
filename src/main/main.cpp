@@ -26,7 +26,6 @@ void write_request_to_file(const std::string &filename)
 		file << "Content-Length: 150\r\n";
 		file << "Content-Type: text/html\r\n";
 		file << "\r\n";
-		file << "This is the content of the file being uploaded via POST request.\n";
     file.close();
 }
 
@@ -41,17 +40,19 @@ int	main(int ac, char **av)
 		return (1);
 	parseConf(conf, file);
 	ssize_t b_size = 0;
-	char    buffer[500];
+	char    buffer[BUFFER_SIZE + 1];
 	write_request_to_file("request.txt");
 	int fd = open("request.txt", O_RDONLY);
 	Handler handler(fd);
-	while ((b_size = read(fd, buffer, 500)) > 0) 
+	while ((b_size = read(fd, buffer, BUFFER_SIZE + 1)) > 0) 
 	{
 		buffer[b_size] = '\0';
 		handler.process(conf.servers.begin()->second, std::string(buffer)); // this is ass coz you only have to call parse.request
+		if (handler.state == COMPLETE || handler.state == ERROR)
+			break;
 	}
 	// this looks stupid but it is to make sure the request is processed if it was not complete yet ( in case of body smaller than content-length )
-	handler.process(conf.servers.begin()->second, "");
+		// handler.process(conf.servers.begin()->second, "");
 	//update upload counter before exiting
 	update_counter(conf.upload_counter_file, conf.servers.begin()->second.upload_counter, 'w');
 }

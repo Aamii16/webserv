@@ -30,6 +30,8 @@ Handler::Handler(int fd): fd(fd){}
 
 void Handler::process(t_server &server, std::string buffer)
 {
+	if (buffer.empty() && request.getState() != COMPLETE)
+		return ;
 	try{
 		request.parse_request(buffer, server.max_body_size);
 		if (request.getState() == COMPLETE)
@@ -38,9 +40,11 @@ void Handler::process(t_server &server, std::string buffer)
 			return ;
 	}
 	catch(err_codes &error){
+		request.setState(ERROR);
+		state = ERROR; // i'll have to find a better way to handle this state stuff later
 		response.setStatusCode(error);
 		response.setHeader("Content-Type", "text/html");
-		std::cout << "Error Code: " << response.getMessage() << std::endl;
+		std::cout << "Error Code: " << error << " msg: " << response.getMessage() << std::endl;
 		// intstrMap::const_iterator it = server.err_pages.find(error);
 		// if (it != server.err_pages.end())
 		// 	response.setbody(it->second);
@@ -48,6 +52,8 @@ void Handler::process(t_server &server, std::string buffer)
 		// 	response.setbody(errpage(error));
 	}
 	catch(status_code &status){
+		request.setState(COMPLETE);
+		state = COMPLETE;
 		response.setStatusCode(status);
 		std::cout << "status code: " << response.getMessage() << std::endl;
 	}

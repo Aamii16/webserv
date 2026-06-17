@@ -77,12 +77,8 @@ void	Handler::handle_post(const location &loc, unsigned int &upload_counter)
 	if (loc.upload_path.empty())
 		throw FORBIDDEN;
 	errno  = 0;
-	if (stat(loc.upload_path.c_str(), &st) == -1) {
-	    if (errno == ENOENT)
-	        throw NOT_FOUND;
-	    else
-	        throw INTERNAL_SERVER_ERROR;
-	}
+	if (stat(loc.upload_path.c_str(), &st) == -1)
+		throw INTERNAL_SERVER_ERROR;
 	if (!S_ISDIR(st.st_mode))
 		throw FORBIDDEN;
 	errno = 0;

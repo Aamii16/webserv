@@ -11,6 +11,7 @@ class Handler
 	Request		request;
 	Response	response;
 	public:
+		s_state state;
 		Handler(int fd);
 
 

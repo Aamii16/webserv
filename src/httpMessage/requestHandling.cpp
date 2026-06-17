@@ -36,8 +36,8 @@ std::string	handle_dir(const location &loc, std::string &path)
 	struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         if (std::string(entry->d_name) != "." && std::string(entry->d_name) != "..")
-           listings += "<li><a href=" + loc.alias + "/" + entry->d_name +">file1.txt</a></li>";
-    }
+			listings += "<li><a href=\"" + loc.alias + "/" + entry->d_name +"\">"+entry->d_name+"</a></li>";
+	}
     closedir(dir);
 	body = 
 		"<!DOCTYPE html>"
@@ -68,20 +68,20 @@ void	Handler::handle_get(const location &loc, std::string &path)
 	struct stat st;
 	std::string ressource;
 
-	if (stat(path.c_str(), &st) == -1) {
-	    if (errno == ENOENT)
-	        throw NOT_FOUND;
-	    else
-	        throw INTERNAL_SERVER_ERROR;
-	}
+	if (stat(path.c_str(), &st) == -1)
+		throw INTERNAL_SERVER_ERROR;
 	if (S_ISDIR(st.st_mode))
 	{
-		if (!loc.index.empty())
-			path += "/" + loc.index;
-		else 
+		if (loc.index.empty())
 			ressource = handle_dir(loc, path);
+		else
+		{
+			path += "/" + loc.index;
+			if (stat(path.c_str(), &st) == -1)
+				throw INTERNAL_SERVER_ERROR;
+		}
 	}
-	else{
+	else if (S_ISREG(st.st_mode) || !loc.index.empty()){
 		errno = 0;
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd == -1 && errno == EACCES)
@@ -128,11 +128,10 @@ void     Handler::handle_request(t_server &server)
 	if (!it->second.methods.at(request.getMethod()))
 		throw METHOD_NOT_ALLOWED;
 	std::string path = (!it->second.root.empty() ? it->second.root : server.root) + "/" + target.substr(it->first.size());
-	// nigga ash kandir b had path 
 	switch (request.getMethod())
 	{
 		case GET:
-			// handle_get(it->second , path);
+			handle_get(it->second , path);
 			break;
 		case POST:
 			handle_post(it->second, server.upload_counter);

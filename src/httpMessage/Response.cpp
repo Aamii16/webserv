@@ -17,9 +17,9 @@ Response::~Response()
 
 }
 
-void	Response::setStatusCode(err_codes &err){status = err;}
+void	Response::setStatusCode(err_codes &err){status = err;setMessage();}
 
-void	Response::setStatusCode(status_code &s){status = s;}
+void	Response::setStatusCode(status_code &s){status = s;setMessage();}
 
 void	Response::setVersion(const std::string &v){version = v;}
 
