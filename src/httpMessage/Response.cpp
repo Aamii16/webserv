@@ -85,3 +85,16 @@ void	Response::redirect(const intstrPair &redir)
 	setHeader("Location", redir.second);
 	throw static_cast<status_code>(redir.first);
 }
+
+std::string	Response::mkResponse()
+{
+	strstrMap::const_iterator it = headers.begin();
+	response_buffer = version + " " + std::to_string(status) + " " + message + "\r\n";
+	while (it != headers.end())
+	{
+		response_buffer += it->first + ": " + it->second + "\r\n";
+		it++;
+	}
+	response_buffer += "\r\n" + body;
+	return response_buffer;
+}

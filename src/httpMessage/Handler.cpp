@@ -1,6 +1,6 @@
 #include "Handler.hpp"
 
-//
+
 void print_request(const Request &req)
 {
     std::cout << "=== HTTP REQUEST ===" << std::endl;
@@ -57,8 +57,10 @@ void Handler::process(t_server &server, std::string buffer)
 		response.setStatusCode(status);
 		std::cout << "status code: " << response.getMessage() << std::endl;
 	}
-	std::cout << "=== bitch why ===" << std::endl;
-	setResponseHeaders(server);
-	print_request(request);
-	response.print_response();
+	if (state == ERROR || state == COMPLETE)
+	{
+		setResponseHeaders(server);
+		print_request(request);
+		response.print_response();
+	}
 }

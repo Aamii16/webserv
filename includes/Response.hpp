@@ -31,6 +31,7 @@ class Response
 		std::string getBody()const{return body;};
 		std::string getHeader(const std::string &key)const;
 		void	redirect(const intstrPair &redir);
+		std::string	mkResponse();
 };
 std::string getCodeMessage(int &code);
 

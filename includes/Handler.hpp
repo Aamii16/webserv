@@ -19,6 +19,7 @@ class Handler
 		void	process(t_server &server, std::string buffer);
 		void	handle_post(const location &loc, unsigned int &upload_counter);
 		void	handle_get(const location &loc, std::string &path);
+		void	handle_delete(std::string &path);
 		void	setResponseHeaders(const t_server &server);
 
 };
