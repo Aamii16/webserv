@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <climits>
 #include <utility>
+#include <dirent.h>
 
 std::string	num_to_str(long long num);
 void	p_error(std::string err);

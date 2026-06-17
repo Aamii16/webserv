@@ -4,7 +4,7 @@
 #include "config.h"
 #include "Request.hpp"
 #include "Response.hpp"
-#include "Connection.hpp"
+#include "Handler.hpp"
 
 #define BUFFER_SIZE 1
 #define MAX_URI_LENGTH 2048

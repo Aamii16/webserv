@@ -25,11 +25,11 @@ class Response
 		void	setVersion(const std::string &v);
 		void	setMessage();
 		void	setHeader(std::string key, std::string value);
-		void	setBody(std::string &b);
+		void	setBody(std::string &b){body = b;};
 		//getters
 		std::string getMessage()const{return message;};
 		std::string getBody()const{return body;};
-
+		std::string getHeader(const std::string &key)const;
 		void	redirect(const intstrPair &redir);
 };
 std::string getCodeMessage(int &code);

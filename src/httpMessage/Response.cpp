@@ -72,6 +72,12 @@ void Response::print_response()const
 }
 
 void	Response::setHeader(std::string key, std::string value){headers[key] = value;}
+std::string Response::getHeader(const std::string &key)const{
+	strstrMap::const_iterator it = headers.find(key);
+	if (it != headers.end())
+		return it->second;
+	return "";
+}
 
 
 void	Response::redirect(const intstrPair &redir)
