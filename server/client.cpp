@@ -12,6 +12,16 @@ Client::~Client()
         close(_fd);
 }
 
+int         Client::getFd()    const { return _fd; }
+std::string Client::getIp()    const { return _ip; }
+int         Client::getPort()  const { return _port; }
+ClientState Client::getState() const { return _state; }
+
+void Client::setState(ClientState state) { _state = state; }
+
+std::string& Client::getReadBuf()  { return _readBuf; }
+std::string& Client::getWriteBuf() { return _writeBuf; }
+    
 bool Client::wantWrite() const { return !_writeBuf.empty(); }
 
 ssize_t Client::recv()
