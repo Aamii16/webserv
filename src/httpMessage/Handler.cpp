@@ -64,3 +64,10 @@ void Handler::process(t_server &server, std::string buffer)
 		response.print_response();
 	}
 }
+
+void Handler::reset()
+{
+	request = Request();
+	response = Response();
+	state = REQ_LINE;
+}
