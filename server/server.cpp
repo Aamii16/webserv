@@ -1,5 +1,7 @@
 #include "server.hpp"
 
+
+
 Server::Server(const std::string& host, int port)
     : _host(host), _port(port), _fd(-1)
 {
@@ -16,6 +18,7 @@ int         Server::getFd()   const { return _fd; }
 std::string Server::getHost() const { return _host; }
 int         Server::getPort() const { return _port; }
 
+
 bool Server::setup()
 {
     _fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -26,7 +29,7 @@ bool Server::setup()
 
     int opt = 1;
     if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        perror("error : setsockopt SO_REUSEADDR");
+        perror("setsockopt SO_REUSEADDR");
         close(_fd); _fd = -1;
         return false;
     }
@@ -37,17 +40,18 @@ bool Server::setup()
         return false;
     }
 
-    _addr.sin_family      = AF_INET; //should go through again internal steps
+    _addr.sin_family      = AF_INET;
+    _addr.sin_port        = htons(static_cast<uint16_t>(_port));
     _addr.sin_addr.s_addr = _host.empty() ? INADDR_ANY : inet_addr(_host.c_str());
 
     if (bind(_fd, reinterpret_cast<sockaddr*>(&_addr), sizeof(_addr)) < 0) {
-        perror("bind failed");
+        perror("bind");
         close(_fd); _fd = -1;
         return false;
     }
 
     if (listen(_fd, SOMAXCONN) < 0) {
-        perror("listen failed");
+        perror("listen");
         close(_fd); _fd = -1;
         return false;
     }

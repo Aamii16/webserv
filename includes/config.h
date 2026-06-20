@@ -6,6 +6,7 @@ typedef std::map<std::string, std::string> strstrMap;
 typedef std::map<int, bool> intboolMap;
 typedef std::map<int, std::string> intstrMap;
 typedef std::map<std::string, int> strintMap;
+typedef std::pair<int, std::string> intstrPair;
 
 
 typedef enum s_token
@@ -62,7 +63,7 @@ typedef struct s_location
 	std::map<int, bool>                 methods;
 	std::string                         index;
 	bool                                auto_idx;
-	std::map<int, std::string>          return_directive;
+	std::pair<int, std::string>          redirection;
 	std::map<std::string, std::string>  cgi_ext;
 	bool                                cgi;
 }   location;

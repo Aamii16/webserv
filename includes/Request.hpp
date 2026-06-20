@@ -75,5 +75,6 @@ class Request
         std::string getHeaderValue(const std::string &key)const;
 
         void        setTarget(std::string &t){target = t;}
+        void        setState(s_state s){state = s;};
         void        setContentLength();
 };

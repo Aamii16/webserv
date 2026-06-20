@@ -18,12 +18,20 @@ class Response
 
 		//delete this later
 		void	print_response()const;
-	
+
 		//setters
 		void	setStatusCode(err_codes &err);
 		void	setStatusCode(status_code &s);
-		void	setVersion(std::string &v);
+		void	setVersion(const std::string &v);
 		void	setMessage();
 		void	setHeader(std::string key, std::string value);
-		void	setBody(std::string &b);
+		void	setBody(std::string &b){body = b;};
+		//getters
+		std::string getMessage()const{return message;};
+		std::string getBody()const{return body;};
+		std::string getHeader(const std::string &key)const;
+		void	redirect(const intstrPair &redir);
+		std::string	mkResponse();
 };
+std::string getCodeMessage(int &code);
+

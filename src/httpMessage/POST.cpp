@@ -1,5 +1,5 @@
-#include "Request.hpp"
-#include "webserv.h"
+#include "Handler.hpp"
+
 
 const std::string get_extension(const std::string &content_type)
 {
@@ -40,23 +40,6 @@ const std::string get_extension(const std::string &content_type)
 	return "";
 }
 
-void	normalise_target(std::string &target)
-{
-	size_t	pos;
-
-	while ((pos = target.find("/../")) != std::string::npos)
-	{
-		size_t last = 0;
-		if (pos != 0)
-			last = target.rfind('/', pos - 1);
-		target.erase(last, 3 + pos - last);
-	}
-	while ((pos = target.find("/./")) != std::string::npos)
-		target.erase(pos, 2);
-	while ((pos = target.find("//")) != std::string::npos)
-		target.erase(pos, 1);
-}
-
 std::string  mkfile(unsigned int file_counter, const std::string &extension)
 {
 	std::string prefix = "uploaded_";
@@ -86,13 +69,14 @@ std::string  mkfile(unsigned int file_counter, const std::string &extension)
 	return name;
 }
 
-void	Connection::handle_post(const location &loc, unsigned int &upload_counter)
+void	Handler::handle_post(const location &loc, unsigned int &upload_counter)
 {
 	std::string name;
 	struct stat st;
 
 	if (loc.upload_path.empty())
 		throw FORBIDDEN;
+	errno  = 0;
 	if (stat(loc.upload_path.c_str(), &st) == -1)
 		throw INTERNAL_SERVER_ERROR;
 	if (!S_ISDIR(st.st_mode))
@@ -107,7 +91,10 @@ void	Connection::handle_post(const location &loc, unsigned int &upload_counter)
 	else if (fd == -1)
 		throw INTERNAL_SERVER_ERROR;
 	upload_counter++;
-	write(fd, request.getBody().c_str(), request.getBody().size());
+	if (write(fd, request.getBody().c_str(), request.getBody().size()) == -1){
+	    close(fd);
+	    throw INTERNAL_SERVER_ERROR;
+	}
 	close(fd);
 	std::string location_header;
 	if (loc.alias[loc.alias.size() - 1] == '/')
@@ -118,43 +105,3 @@ void	Connection::handle_post(const location &loc, unsigned int &upload_counter)
 	throw CREATED;
 }
 
-void     Connection::handle_request(t_server &server)
-{
-	strlocationMap::const_iterator it = server.locations.begin();
-	std::string target = request.getTarget();
-
-	if (request.getHeaderValue("Host").empty())
-		throw BAD_REQUEST;
-	if (request.getMethod() == POST)
-		request.getTarget() += "/";
-	normalise_target(target);
-	request.setTarget(target);
-	for (;it != server.locations.end();++it){
-		if (target.size() >= it->first.size() && !target.compare(0, it->first.size(), it->first) &&
-			(target.size() == it->first.size() || target[it->first.size()] == '/'))
-			break;
-	}
-	if (it == server.locations.end())
-		it = server.locations.find("/");
-	if (it == server.locations.end())
-		throw NOT_FOUND;
-	// if (!it->second.return_directive.empty())
-		// 	redirection();
-	if (!it->second.methods.at(request.getMethod()))
-		throw METHOD_NOT_ALLOWED;
-	std::string path = (!it->second.root.empty() ? it->second.root : server.root) + "/" + target.substr(it->first.size());
-	switch (request.getMethod())
-	{
-		case GET:
-			// handle_get(path);
-			break;
-		case POST:
-			handle_post(it->second, server.upload_counter);
-			break;
-		case DELETE:
-			// handle_delete(path);
-			break;
-		default:
-			throw NOT_IMPLEMENTED;
-	}
-}

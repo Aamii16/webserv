@@ -1,12 +1,26 @@
-// #include "core_server.hpp"
-// #include <cstdlib>
+#include "core_server.hpp"
+#include <cstdlib>
 
-// int main(void)
-// {
-//     CoreServer core;
+int main(void)
+{
 
-//     core.addServer("0.0.0.0", 8080);
+    t_server cfg;
+    cfg.host          = "0.0.0.0";
+    cfg.port          = 8080;
+    cfg.server_name   = "localhost";
+    cfg.root          = "./www";
+    cfg.max_body_size = 1048576;
 
-//     core.run();
-//     return EXIT_SUCCESS;
-// }
+    location root_loc;
+    root_loc.methods[GET]    = true;
+    root_loc.methods[POST]   = true;
+    root_loc.methods[DELETE] = false;
+    root_loc.root            = "./www";
+    cfg.locations["/"]       = root_loc;
+
+    CoreServer core;
+    core.addServer(cfg.host, cfg.port, cfg);
+    core.run();
+
+    return EXIT_SUCCESS;
+}

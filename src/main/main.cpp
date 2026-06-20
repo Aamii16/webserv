@@ -20,13 +20,12 @@ void write_request_to_file(const std::string &filename)
     if (!file.is_open())
         throw std::runtime_error("Cannot open file: " + filename);
 		
-		file << "POST /upload HTTP/1.1\r\n";
+		file << "GET /images HTTP/1.1\r\n";
 		file << "Host: localhost:8080\r\n";
 		file << "User-Agent: curl/7.64.1\r\n";
 		file << "Content-Length: 150\r\n";
 		file << "Content-Type: text/html\r\n";
 		file << "\r\n";
-		file << "This is the content of the file being uploaded via POST request.\n";
     file.close();
 }
 
@@ -41,16 +40,19 @@ int	main(int ac, char **av)
 		return (1);
 	parseConf(conf, file);
 	ssize_t b_size = 0;
-	char    buffer[500];
+	char    buffer[BUFFER_SIZE + 1];
 	write_request_to_file("request.txt");
 	int fd = open("request.txt", O_RDONLY);
-	Connection conn(fd);
-	while ((b_size = read(fd, buffer, 500)) > 0) 
+	Handler handler(fd);
+	while ((b_size = read(fd, buffer, BUFFER_SIZE + 1)) > 0) 
 	{
 		buffer[b_size] = '\0';
-		conn.process(conf.servers.begin()->second, std::string(buffer));
+		handler.process(conf.servers.begin()->second, std::string(buffer)); // this is ass coz you only have to call parse.request
+		if (handler.state == COMPLETE || handler.state == ERROR)
+			break;
 	}
-	conn.process(conf.servers.begin()->second, "");
+	// this looks stupid but it is to make sure the request is processed if it was not complete yet ( in case of body smaller than content-length )
+		// handler.process(conf.servers.begin()->second, "");
 	//update upload counter before exiting
 	update_counter(conf.upload_counter_file, conf.servers.begin()->second.upload_counter, 'w');
 }

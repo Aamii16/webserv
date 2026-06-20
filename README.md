@@ -20,22 +20,4 @@ i have to set response headers
 
 last modifications were lost, i wrote a note about status not working and it's not here
 
-i think 
-
-------------------------------------------------------------------------------------------
-
-multiplexing done (t9riban)
-
-remove errno checks
-
-client getters utils to be set after reading how request is processed
-
-need to finish the client destroyer and delete in coreserver
-
-update clients map
-
-figure out efficient way to navigate into request sockets in buffer for reading 
-
-update the way to process the request and remove place holder
-
-integrate into main and add automation tests cz they take time
+i think al
