@@ -3,10 +3,11 @@ working on GET i need to read about URI again
 
 i need to find a solution for that parsing and processing call inside the loop
 
-i hace to work on request state
+i have to work on request state
 
 i have to add exceptions for server error, and search if it is a 500 error code, or is it an exit and terminate server
 
+cgi shit
 
 ===================================================================
 
