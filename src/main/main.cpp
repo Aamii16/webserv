@@ -39,18 +39,14 @@ int	main(int ac, char **av)
 	if (!validConf(std::string(av[1]), std::string(".conf"), file))
 		return (1);
 	parseConf(conf, file);
-	ssize_t b_size = 0;
-	char    buffer[BUFFER_SIZE + 1];
-	write_request_to_file("request.txt");
-	int fd = open("request.txt", O_RDONLY);
-	Handler handler(fd);
-	while ((b_size = read(fd, buffer, BUFFER_SIZE + 1)) > 0) 
-	{
-		buffer[b_size] = '\0';
-		handler.process(conf.servers.begin()->second, std::string(buffer)); // this is ass coz you only have to call parse.request
-		if (handler.state == COMPLETE || handler.state == ERROR)
-			break;
-	}
+	// ssize_t b_size = 0;
+	// char    buffer[BUFFER_SIZE + 1];
+	// write_request_to_file("request.txt");
+	// int fd = open("request.txt", O_RDONLY);
+	// Handler handler(fd);
+	CoreServer server;
+	server.addServer(conf.servers.begin()->second.ip, conf.servers.begin()->second.port);
+	server.run();
 	// this looks stupid but it is to make sure the request is processed if it was not complete yet ( in case of body smaller than content-length )
 		// handler.process(conf.servers.begin()->second, "");
 	//update upload counter before exiting

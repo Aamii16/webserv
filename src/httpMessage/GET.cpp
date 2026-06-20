@@ -10,9 +10,11 @@ std::string	handle_dir(const location &loc, std::string &path)
 	std::string body;
 	DIR *dir = opendir(path.c_str());
 
-	if (!dir) {
+	if (!dir){
 	    if (errno == EACCES)
 	        throw FORBIDDEN;
+		else if (errno == ENOENT)
+	        throw NOT_FOUND;
 		else
 	        throw INTERNAL_SERVER_ERROR;
 	}
@@ -53,6 +55,7 @@ void	Handler::handle_get(const location &loc, std::string &path)
 
 	if (stat(path.c_str(), &st) == -1)
 		throw INTERNAL_SERVER_ERROR;
+	// check errno
 	if (S_ISDIR(st.st_mode))
 	{
 		if (loc.index.empty())
@@ -62,6 +65,7 @@ void	Handler::handle_get(const location &loc, std::string &path)
 			path += "/" + loc.index;
 			if (stat(path.c_str(), &st) == -1)
 				throw INTERNAL_SERVER_ERROR;
+			// check ernno too 
 		}
 	}
 	else if (S_ISREG(st.st_mode) || !loc.index.empty()){
@@ -69,6 +73,8 @@ void	Handler::handle_get(const location &loc, std::string &path)
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd == -1 && errno == EACCES)
 			throw FORBIDDEN;
+		else if (fd == -1 && errno == ENOENT)
+			throw NOT_FOUND;
 		else if (fd == -1)
 			throw INTERNAL_SERVER_ERROR;
 		char buf[1024];
@@ -82,6 +88,7 @@ void	Handler::handle_get(const location &loc, std::string &path)
 		}
 		close(fd);
 	}
+	set content-type
 	response.setBody(ressource);
 	throw OK;
 }

@@ -5,7 +5,12 @@ i need to find a solution for that parsing and processing call inside the loop
 
 i hace to work on request state
 
-GOTTA WORK ON CONNECTION LOOOP while (true) 
+i have to add exceptions for server error, and search if it is a 500 error code, or is it an exit and terminate server
+
+
+===================================================================
+
+
 // Step 1: Wait for ANY fd to be ready ready_fds = select/poll/epoll(all_fds);
 
 for (each ready_fd in ready_fds) {
@@ -40,6 +45,8 @@ for (each ready_fd in ready_fds) {
         }
     }
 }
+
+
 ==================================
 multiplexing done (t9riban)
 
