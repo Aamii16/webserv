@@ -89,7 +89,7 @@ void	Response::redirect(const intstrPair &redir)
 std::string	Response::mkResponse()
 {
 	strstrMap::const_iterator it = headers.begin();
-	response_buffer = version + " " + std::to_string(status) + " " + message + "\r\n";
+	response_buffer = version + " " + num_to_str(status) + " " + message + "\r\n";
 	while (it != headers.end())
 	{
 		response_buffer += it->first + ": " + it->second + "\r\n";
