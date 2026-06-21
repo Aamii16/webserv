@@ -4,6 +4,8 @@ bool valid_ip(std::string &ip)
 {
     int count = 0;
     size_t i = 0;
+    if (ip == "localhost")
+        return true;
     for (i = 0;i < ip.size();++i)
         if (ip[i] == '.')
             count++;
@@ -70,6 +72,8 @@ std::string parse_server(t_configuration &conf, std::ifstream &file, std::string
                 serv.listen = value;break;
             case ROOT:
                 serv.root = value;break;
+            case SERVER_NAME:
+                serv.server_name = value;break;
             case C_MAX_SIZE:
                 errno = 0;
                 serv.max_body_size = std::strtol(value.c_str(), NULL, 10);

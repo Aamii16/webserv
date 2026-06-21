@@ -25,12 +25,14 @@ class Response
 		void	setVersion(const std::string &v);
 		void	setMessage();
 		void	setHeader(std::string key, std::string value);
-		void	setBody(std::string &b){body = b;};
+		void	setBody(std::string b){body = b;};
 		//getters
 		std::string getMessage()const{return message;};
 		std::string getBody()const{return body;};
 		std::string getHeader(const std::string &key)const;
-		void	redirect(const intstrPair &redir);
+		//helpers
+		std::string geterrpage(const t_server &server, int code);
+		void		redirect(const intstrPair &redir);
 		std::string	mkResponse();
 };
 std::string getCodeMessage(int &code);

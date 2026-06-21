@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error 500: Internal Server Error</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #334155; line-height: 1.6; padding: 40px 20px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .container { max-width: 600px; width: 100%; background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); border-top: 4px solid #ef4444; }
+        .error-code { font-size: 72px; font-weight: 800; color: #dc2626; margin: 0; line-height: 1; }
+        h1 { font-size: 24px; color: #1e293b; margin: 10px 0 20px 0; font-weight: 700; }
+        p { margin: 0 0 20px 0; color: #64748b; }
+        .alert-box { background: #fef2f2; border: 1px solid #fee2e2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 6px; color: #991b1b; font-size: 14px; margin-bottom: 30px; }
+        .actions { display: flex; gap: 15px; }
+        .btn { display: inline-block; padding: 10px 20px; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 6px; transition: background 0.2s; }
+        .btn-primary { background: #ef4444; color: #ffffff; }
+        .btn-primary:hover { background: #dc2626; }
+        .btn-secondary { background: #e2e8f0; color: #475569; }
+        .btn-secondary:hover { background: #cbd5e1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-code">500</div>
+        <h1>Internal Server Error</h1>
+        <p>The backend server encountered an unexpected error condition that prevented it from completing your request. This is rarely a client-side layout issue.</p>
+        
+        <div class="alert-box">
+            <strong>Administrator Notice:</strong> Check the application console log files for stack traces, memory faults, or missing script configuration blocks.
+        </div>
+		here again remove this return 
+        <div class="actions">
+            <a href="/" class="btn btn-primary">Return to Safety</a>
+            <a href="javascript:window.location.reload()" class="btn btn-secondary">Refresh Page</a>
+        </div>
+    </div>
+</body>
+</html>

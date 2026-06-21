@@ -44,23 +44,17 @@ void Handler::process(t_server &server, std::string buffer)
 		state = ERROR; // i'll have to find a better way to handle this state stuff later
 		response.setStatusCode(error);
 		response.setHeader("Content-Type", "text/html");
-		std::cout << "Error Code: " << error << " msg: " << response.getMessage() << std::endl;
-		// intstrMap::const_iterator it = server.err_pages.find(error);
-		// if (it != server.err_pages.end())
-		// 	response.setbody(it->second);
-		// else
-		// 	response.setbody(errpage(error));
+		response.setBody(response.geterrpage(server, error));
 	}
 	catch(status_code &status){
 		request.setState(COMPLETE);
 		state = COMPLETE;
 		response.setStatusCode(status);
-		std::cout << "status code: " << response.getMessage() << std::endl;
 	}
 	if (state == ERROR || state == COMPLETE)
 	{
 		setResponseHeaders(server);
-		print_request(request);
+		// print_request(request);
 		response.print_response();
 	}
 }
