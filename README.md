@@ -72,3 +72,12 @@ while (true) {
         }
     }
 }
+
+
+--------------------------------------------------------------------------------------------------------------
+-ERRORS
+GET got fixed in last commit 
+POST still have same error: it throws error 500 internal server error
+chunked requests still to be handled
+program segfaults when a non implemeted method is used by client
+also when the request is in lowercase
