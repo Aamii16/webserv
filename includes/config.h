@@ -71,10 +71,11 @@ typedef struct s_location
 
 typedef std::map<std::string, location> strlocationMap;
 
-typedef struct s_server
+struct t_server
 {
+	std::string      				host;
+    std::string				      	server_name;
 	std::string						listen;
-	std::string						server_name;
 	std::string						ip;
 	int								port;
 	std::string						root;
@@ -83,7 +84,10 @@ typedef struct s_server
 	std::map<std::string, location>	locations;
 	// upload counter to generate unique file names for uploads, stored in a file to persist across server restarts
 	unsigned int 					upload_counter;
-}   t_server;
+	
+
+	t_server() : port(8080), max_body_size(1048576), upload_counter(0) {}
+}	;	
 
 
 

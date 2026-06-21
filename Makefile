@@ -5,7 +5,7 @@ SRC := $(wildcard src/*/*.cpp)
 BINDIR = bin
 OBJ := $(patsubst %.cpp, $(BINDIR)/%.o, $(notdir $(SRC)))
 DEP = $(wildcard includes/*.h)
-vpath %.cpp src/config src/main src/utils src/httpMessage src/server
+vpath %.cpp src/config src/server src/utils src/httpMessage src/main
 
 all : $(NAME)
 

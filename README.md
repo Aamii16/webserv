@@ -64,3 +64,59 @@ figure out efficient way to navigate into request sockets in buffer for reading
 update the way to process the request and remove place holder
 
 integrate into main and add automation tests cz they take time
+GOTTA WORK ON CONNECTION LOOOP 
+while (true) {
+    // Step 1: Wait for ANY fd to be ready
+    ready_fds = select/poll/epoll(all_fds);
+    
+    for (each ready_fd in ready_fds) {
+        
+        // Step 2: Is it a new connection?
+        if (ready_fd == listen_socket)
+            new_fd = accept();
+            add new_fd to monitored fds;
+        
+        // Step 3: Is it an existing connection with data?
+        else {
+            buffer = read(ready_fd);
+            
+            // Step 4: Process request
+            state = handler.process(buffer);
+            
+            // Step 5: Request complete?
+            if (state == COMPLETE) {
+                response = handler.getResponse();
+                write(ready_fd, response);
+                
+                // Step 6: Keep connection open?
+                if (handler.shouldClose())
+                    close(ready_fd);
+                    remove ready_fd from monitored fds;
+                else
+                    handler.reset();  // Clear for next request
+            }
+            else if (state == ERROR) {
+                write(ready_fd, error_response);
+                close(ready_fd);
+            }
+        }
+    }
+}
+
+
+--------------------------------------------------------------------------------------------------------------
+-ERRORS
+
+GET got fixed in last commit
+
+POST still have same error: it throws error 500 internal server error 
+"printf 'POST / HTTP/1.1\r\nHost: localhost' | nc localhost 8080"
+
+chunked requests still to be handled :
+"printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n' | nc localhost 8080"
+
+program segfaults when a non implemeted method is used by client "PATCH"
+
+also when the request is in lowercase
+
+

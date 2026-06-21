@@ -5,8 +5,8 @@
 class Response;
 
 typedef enum s_state{
-    INITIAL,
-    REQ_LINE,
+    READING  = 0,
+    REQ_LINE = 1,
 	HEADERS,
 	BODY,
 	COMPLETE,
