@@ -76,8 +76,17 @@ while (true) {
 
 --------------------------------------------------------------------------------------------------------------
 -ERRORS
-GET got fixed in last commit 
-POST still have same error: it throws error 500 internal server error
-chunked requests still to be handled
-program segfaults when a non implemeted method is used by client
+
+GET got fixed in last commit
+
+POST still have same error: it throws error 500 internal server error 
+"printf 'POST / HTTP/1.1\r\nHost: localhost' | nc localhost 8080"
+
+chunked requests still to be handled :
+"printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n' | nc localhost 8080"
+
+program segfaults when a non implemeted method is used by client "PATCH"
+
 also when the request is in lowercase
+
+
