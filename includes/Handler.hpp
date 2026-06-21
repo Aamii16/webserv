@@ -22,4 +22,8 @@ class Handler
 		void	handle_delete(std::string &path);
 		void	setResponseHeaders(const t_server &server);
 
+		s_state       getState() const;
+		// std::string getResponseString() const;
+		void        reset(); 
+
 };

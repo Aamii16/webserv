@@ -25,7 +25,7 @@ void print_request(const Request &req)
 	std::cout << "state: " << req.getState() << std::endl;
 }
 
-Handler::Handler(int fd): fd(fd){}
+Handler::Handler(int fd) : fd(fd), state(READING) {}
 
 
 void Handler::process(t_server &server, std::string buffer)
@@ -63,4 +63,21 @@ void Handler::process(t_server &server, std::string buffer)
 		print_request(request);
 		response.print_response();
 	}
+}
+
+state Handler::getState() const
+{
+    return state;  
+}
+
+// std::string Handler::getResponseString() const
+// {
+//     return response.mkResponse();
+// }
+
+void Handler::reset()
+{
+    request  = Request();
+    response = Response();
+    state    = READING;
 }

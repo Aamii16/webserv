@@ -43,6 +43,19 @@ bool Server::setup()
     _addr.sin_family      = AF_INET;
     _addr.sin_port        = htons(static_cast<uint16_t>(_port));
     _addr.sin_addr.s_addr = _host.empty() ? INADDR_ANY : inet_addr(_host.c_str());
+    // if (_host.empty())
+    // {
+    //     _addr.sin_addr.s_addr = INADDR_ANY;
+    // }
+    // else
+    // {
+    //     if (inet_pton(AF_INET, _host.c_str(), &_addr.sin_addr) <= 0)
+    //     {
+    //         perror("inet_pton");
+    //         close(_fd); _fd = -1;
+    //         return false;
+    //     }
+    // }
 
     if (bind(_fd, reinterpret_cast<sockaddr*>(&_addr), sizeof(_addr)) < 0) {
         perror("bind");

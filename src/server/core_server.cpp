@@ -103,7 +103,7 @@ void CoreServer::handleClientRead(int fd)
     s_state hs = client->getHandler().getState();
     if (hs == COMPLETE || hs == ERROR)
     {
-        client->getWriteBuf() = client->getHandler().getResponseString();
+        // client->getWriteBuf() = client->getHandler().getResponseString();
 
         client->getHandler().reset();
     }

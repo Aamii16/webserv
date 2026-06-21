@@ -1,23 +1,47 @@
 # webserv
 
- i need to decide whther to add upload_enable or not (confg file)
-working on POST method
+working on GET
+i need to read about URI again
 
-added connection class to wrap request and response
-using try catch errors for error/status codes
+i need to find a solution for that parsing and processing call inside the loop 
 
-working on response 
-	
-POST is half done
+i hace to work on request state 
 
-server.upload_counter doesn't get updated // you lazy bitch it was just mistype
-
-nigga something wrong again with the upload , int uploafs 2 at a time and with no body // i don't know if im just blind or program was tweaking
-
-
-
-i have to set response headers 
-
-last modifications were lost, i wrote a note about status not working and it's not here
-
-i think al
+GOTTA WORK ON CONNECTION LOOOP 
+while (true) {
+    // Step 1: Wait for ANY fd to be ready
+    ready_fds = select/poll/epoll(all_fds);
+    
+    for (each ready_fd in ready_fds) {
+        
+        // Step 2: Is it a new connection?
+        if (ready_fd == listen_socket)
+            new_fd = accept();
+            add new_fd to monitored fds;
+        
+        // Step 3: Is it an existing connection with data?
+        else {
+            buffer = read(ready_fd);
+            
+            // Step 4: Process request
+            state = handler.process(buffer);
+            
+            // Step 5: Request complete?
+            if (state == COMPLETE) {
+                response = handler.getResponse();
+                write(ready_fd, response);
+                
+                // Step 6: Keep connection open?
+                if (handler.shouldClose())
+                    close(ready_fd);
+                    remove ready_fd from monitored fds;
+                else
+                    handler.reset();  // Clear for next request
+            }
+            else if (state == ERROR) {
+                write(ready_fd, error_response);
+                close(ready_fd);
+            }
+        }
+    }
+}
