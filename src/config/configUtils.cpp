@@ -19,6 +19,8 @@ int    valid_token(std::string line, int block)
     {
         if (token == "listen")
             return PORT;
+        else if (token == "server_name")
+            return SERVER_NAME;
         else if (token == "root")
             return ROOT;
         else if (token == "client_max_body_size")

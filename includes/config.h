@@ -13,6 +13,7 @@ typedef enum s_token
 {
 	ERR_PAGE = 1,
 	SERVER,
+	SERVER_NAME,
 	LOCATION,
 	PORT,
 	ROOT,
@@ -75,6 +76,7 @@ struct t_server
 	std::string      				host;
     std::string				      	server_name;
 	std::string						listen;
+	std::string						server_name;
 	std::string						ip;
 	int								port;
 	std::string						root;

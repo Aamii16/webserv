@@ -22,10 +22,11 @@ void write_request_to_file(const std::string &filename)
         throw std::runtime_error("Cannot open file: " + filename);
 		
 		file << "GET /images HTTP/1.1\r\n";
-		file << "Host: localhost:8080\r\n";
+		file << "Host: 127.0.0.1:8080\r\n";
 		file << "User-Agent: curl/7.64.1\r\n";
 		file << "Content-Length: 150\r\n";
 		file << "Content-Type: text/html\r\n";
+		file << "Connection: keep-alive\r\n";
 		file << "\r\n";
     file.close();
 }
@@ -40,8 +41,8 @@ int	main(int ac, char **av)
 	if (!validConf(std::string(av[1]), std::string(".conf"), file))
 		return (1);
 	parseConf(conf, file);
-	ssize_t b_size = 0;
 	char    buffer[BUFFER_SIZE + 1];
+	ssize_t b_size = 0;
 	write_request_to_file("request.txt");
 	int fd = open("request.txt", O_RDONLY);
 	Handler handler(fd);
@@ -53,6 +54,8 @@ int	main(int ac, char **av)
 			break;
 	}
 	// this looks stupid but it is to make sure the request is processed if it was not complete yet ( in case of body smaller than content-length )
+	if (handler.state == COMPLETE || handler.state == ERROR)
+		handler.process(conf.servers.begin()->second, "");
 		// handler.process(conf.servers.begin()->second, "");
 	//update upload counter before exiting
 	update_counter(conf.upload_counter_file, conf.servers.begin()->second.upload_counter, 'w');

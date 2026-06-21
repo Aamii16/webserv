@@ -1,6 +1,5 @@
 #include "Handler.hpp"
 
-
 std::string	handle_dir(const location &loc, std::string &path)
 {
 	if (!loc.auto_idx)
@@ -10,12 +9,12 @@ std::string	handle_dir(const location &loc, std::string &path)
 	std::string body;
 	DIR *dir = opendir(path.c_str());
 
-	if (!dir) {
-	    if (errno == EACCES)
+	if (!dir && errno == EACCES)
 	        throw FORBIDDEN;
-		else
-	        throw INTERNAL_SERVER_ERROR;
-	}
+	else if (!dir && errno == ENOENT)
+	     throw NOT_FOUND;
+	else if (!dir)
+	     throw INTERNAL_SERVER_ERROR;
 	struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         if (std::string(entry->d_name) != "." && std::string(entry->d_name) != "..")
@@ -23,27 +22,46 @@ std::string	handle_dir(const location &loc, std::string &path)
 	}
     closedir(dir);
 	body = 
-		"<!DOCTYPE html>"
-    	"<html lang=\"en\">"
-    	"<head>"
-    	"<meta charset=\"UTF-8\" />"
-    	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />"
-    	"<script src=\"https://cdn.tailwindcss.com\"></script>"
-    	"<title>autoindex</title>"
-    	"</head>"
-    	"<body class=\"bg-gray-200 text-center\">"
-    	"<div class=\"mx-auto min-h-screen max-w-3xl bg-blue-100 py-10 border-l-4 border-r-4 border-black px-6\">"
-    	"<h1 class=\"font-bold text-8xl\">Index of</h1>"
-    	"<h1 class=\"font-bold text-5xl my-8\">" + loc.alias + 
-    	"</h1>"
-    	"<div class=\"flex flex-col bg-white max-w-xl mx-auto border-2 border-black rounded-2xl\">"
-    	"<ul class=\"list-none\">" + listings + 
-		"</ul>"
-    	"</div>"
-    	"</div>"
-    	"</body>"
-    	"</html>";
+	    "<!DOCTYPE html>\n"
+	    "<html>\n"
+	    "<head>\n"
+	    "    <meta charset=\"utf-8\">\n"
+	    "    <title>Index</title>\n"
+	    "    <style>\n"
+	    "        body { font-family: monospace; padding: 20px; font-size: 14px; }\n"
+	    "        ul { list-style: none; padding: 0; }\n"
+	    "        li { padding: 6px 0; border-bottom: 1px solid #eee; }\n"
+	    "        a { text-decoration: none; color: #0066cc; }\n"
+	    "        a:hover { text-decoration: underline; }\n"
+	    "    </style>\n"
+	    "</head>\n"
+	    "<body>\n"
+	    "<h2>Index of /</h2>\n"
+	    "<ul>\n"
+	    "    <li><a href=\"../\">📁 .. " + loc.alias + "</a></li>" 
+	    + listings + 
+	    "</ul>\n"
+	    "</body>\n"
+	    "</html>";
+
 	return body;
+}
+
+std::string get_mime_type(const std::string &path)
+{
+	std::string ext;
+	size_t pos = path.rfind(".");
+	if (pos == std::string::npos)
+		return "text/plain";
+	else
+		ext = path.substr(pos + 1);
+	strstrMap types = mimeTypes();
+	for (strstrMap::const_iterator it = types.begin(); it != types.end(); ++it)
+	{
+		if (it->second == ext)
+			return it->first;
+	}
+	return "text/plain";
 }
 
 void	Handler::handle_get(const location &loc, std::string &path)
@@ -51,26 +69,27 @@ void	Handler::handle_get(const location &loc, std::string &path)
 	struct stat st;
 	std::string ressource;
 
-	if (stat(path.c_str(), &st) == -1)
-		throw INTERNAL_SERVER_ERROR;
+	validate_file_path(stat(path.c_str(), &st));
 	if (S_ISDIR(st.st_mode))
 	{
 		if (loc.index.empty())
+		{
 			ressource = handle_dir(loc, path);
+			response.setHeader("Content-Type", "text/html");
+		}
 		else
 		{
-			path += "/" + loc.index;
-			if (stat(path.c_str(), &st) == -1)
-				throw INTERNAL_SERVER_ERROR;
+			if (path[path.size() - 1] != '/')
+				path += "/";
+			path += loc.index;
+			errno = 0;
+			validate_file_path(stat(path.c_str(), &st));
 		}
 	}
-	else if (S_ISREG(st.st_mode) || !loc.index.empty()){
+	if (!loc.index.empty() || S_ISREG(st.st_mode)){
 		errno = 0;
 		int fd = open(path.c_str(), O_RDONLY);
-		if (fd == -1 && errno == EACCES)
-			throw FORBIDDEN;
-		else if (fd == -1)
-			throw INTERNAL_SERVER_ERROR;
+		validate_file_path(fd);
 		char buf[1024];
 		ssize_t bytes_read;
 		while ((bytes_read = read(fd, buf, sizeof(buf))) > 0)
@@ -81,6 +100,7 @@ void	Handler::handle_get(const location &loc, std::string &path)
 			throw INTERNAL_SERVER_ERROR;
 		}
 		close(fd);
+		response.setHeader("Content-Type", get_mime_type(path));
 	}
 	response.setBody(ressource);
 	throw OK;

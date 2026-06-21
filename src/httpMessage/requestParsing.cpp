@@ -22,7 +22,6 @@ int	has_whitespace(std::string &str)
 	return 0;
 }
 
-
 static void	valid_request_line(int	&method, std::string &target, std::string &version)
 {
 	if (has_whitespace(target) || target.empty() || version.empty() || target[0] != '/')
@@ -31,7 +30,8 @@ static void	valid_request_line(int	&method, std::string &target, std::string &ve
 		throw METHOD_NOT_ALLOWED;
 	if (target.size() > MAX_URI_LENGTH)
 		throw URI_TOO_LONG;
-	if (version != "HTTP/1.1" && version != "HTTP/1.0") // might wanna change this to 1.1 only
+	// might wanna change this to 1.1 only
+	if (version != "HTTP/1.1" && version != "HTTP/1.0")
 		throw UNSUPPORTED_HTTP;
 }
 
@@ -113,7 +113,10 @@ void	Request::parse_header(std::string &header)
 		if (header.size() > pos + 2)
 			header = header.substr(pos + 2);
 		else
+		{
+			header = "";
 			break ;
+		}
 	}
 }
 
@@ -160,13 +163,16 @@ void	Request::parse_request(std::string buffer, const size_t &max_body_size)
 		size_t pos = r_buffer.rfind("\r\n");
 		if (pos != std::string::npos)
 		{
+			//now for some reason it stays stuck in same line (first line)
 			parse_header(r_buffer);
 			// turns out im substringint twice (first in parse_header)
 			// this could be troublesome later
-			// if (r_buffer.size() > pos + 2)
-			// 	r_buffer = r_buffer.substr(pos + 2);
+			// now i realised i actually need to substring here, but i don't remember why i commented it before
+			// pos = r_buffer.find("\r\n");
+			// if (pos != std::string::npos && r_buffer.size() > pos + 2)
+				// r_buffer = r_buffer.substr(pos + 2);
 			// else
-			// 	r_buffer = "";
+				// r_buffer = "";
 		}
 		else if (r_buffer.size() > MAX_HEADER_FIELD_LENGTH)
 			throw HEADER_FIELD_TOO_LARGE;

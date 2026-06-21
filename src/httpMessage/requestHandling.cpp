@@ -1,6 +1,19 @@
 #include "Request.hpp"
 #include "webserv.h"
 
+void validate_file_path(int val){
+    if (val == -1) {
+        switch (errno) {
+            case ENOENT:
+                throw NOT_FOUND;
+            case EACCES:
+                throw FORBIDDEN;
+            default:
+                throw INTERNAL_SERVER_ERROR;
+        }
+    }
+}
+
 void	normalise_target(std::string &target)
 {
 	size_t	pos;
@@ -24,23 +37,11 @@ void Handler::handle_delete(std::string &path)
 	struct stat st;
 
 	errno  = 0;
-	if (stat(path.c_str(), &st) == -1)
-	{
-	    if (errno == ENOENT)
-	        throw NOT_FOUND;
-	    else
-	        throw INTERNAL_SERVER_ERROR;
-	}
+	validate_file_path(stat(path.c_str(), &st));
 	if (S_ISDIR(st.st_mode))
 		throw FORBIDDEN;
 	errno = 0;
-	if (unlink(path.c_str()) == -1)
-	{
-	    if (errno == ENOENT)
-	        throw NOT_FOUND;
-	    else
-	        throw INTERNAL_SERVER_ERROR;
-	}
+	validate_file_path(unlink(path.c_str()));
 	throw NO_CONTENT;
 }
 

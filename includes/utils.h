@@ -14,6 +14,12 @@
 #include <climits>
 #include <utility>
 #include <dirent.h>
+#include <sys/epoll.h>
+
+
+typedef std::map<std::string, std::string> strstrMap;
 
 std::string	num_to_str(long long num);
+const strstrMap &mimeTypes();
+void validate_file_path(int val);
 void	p_error(std::string err);

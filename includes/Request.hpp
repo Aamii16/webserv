@@ -38,7 +38,6 @@ typedef enum status_code
 	NO_CONTENT = 204,
 	MOVED_PERMANENTLY = 301,
 	FOUND = 302,
-	NOT_MODIFIED = 304,
 }	status_code;
 
 class Request
