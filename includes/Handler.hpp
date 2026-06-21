@@ -21,7 +21,6 @@ class Handler
 		void	handle_get(const location &loc, std::string &path);
 		void	handle_delete(std::string &path);
 		void	setResponseHeaders(const t_server &server);
-		void	reset();
 
 		s_state       getState() const;
 		std::string getResponseString();

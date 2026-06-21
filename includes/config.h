@@ -76,7 +76,6 @@ struct t_server
 	std::string      				host;
     std::string				      	server_name;
 	std::string						listen;
-	std::string						server_name;
 	std::string						ip;
 	int								port;
 	std::string						root;
