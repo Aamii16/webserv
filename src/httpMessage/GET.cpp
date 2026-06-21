@@ -79,12 +79,14 @@ void	Handler::handle_get(const location &loc, std::string &path)
 		}
 		else
 		{
-			path += "/" + loc.index;
+			if (path[path.size() - 1] != '/')
+				path += "/";
+			path += loc.index;
 			errno = 0;
 			validate_file_path(stat(path.c_str(), &st));
 		}
 	}
-	else if (S_ISREG(st.st_mode) || !loc.index.empty()){
+	if (!loc.index.empty() || S_ISREG(st.st_mode)){
 		errno = 0;
 		int fd = open(path.c_str(), O_RDONLY);
 		validate_file_path(fd);

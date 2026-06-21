@@ -10,6 +10,7 @@ i have to add exceptions for server error, and search if it is a 500 error code,
 
 cgi shit
 
+
 added server name to config file and resposne headers
 added and chnaged  custom htmnl bodies for err pages and directory listings
 
