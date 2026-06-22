@@ -88,7 +88,7 @@ void CGIHandler::execute()//const std::string &body
     char buf[5000];
     ssize_t n;
     while ((n = read(pipe_out[0], buf, sizeof(buf))) > 0)
-        _output.append(buf, n);
+        output.append(buf, n);
     close(pipe_out[0]);
 
     int status;
@@ -100,12 +100,12 @@ void CGIHandler::execute()//const std::string &body
 
 void CGIHandler::parseheader(Response &response)
 {
-
+	(void)response;
 }
 
 void CGIHandler::parsebody(std::string output)
 {
-
+ (void)output;
 }
 std::string CGIHandler::getOutput() const
 {

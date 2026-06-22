@@ -102,18 +102,8 @@ while (true) {
 
 
 --------------------------------------------------------------------------------------------------------------
--ERRORS
-
-GET got fixed in last commit
-
-POST still have same error: it throws error 500 internal server error 
-"printf 'POST / HTTP/1.1\r\nHost: localhost' | nc localhost 8080"
-
-chunked requests still to be handled :
-"printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Type: text/html\r\nContent-Length: 5\r\nHello\r\n\r\n\r\n' | nc localhost 8080"
-
-program segfaults when a non implemeted method is used by client "PATCH"
-
-also when the request is in lowercase
+need to add sig_handlers
+timeout clients (shld do it before finishing CGI to not get confused)
+keep the upload counter up to date whenever
 
 
