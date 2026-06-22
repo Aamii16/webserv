@@ -64,6 +64,10 @@ void	Handler::handle_cgi(const location &loc, std::string &path, const t_server&
 	CGIHandler cgi(loc.cgi_ext.at(ext));
 	cgi.setEnvVars(request, request.getTarget(), path, server);
 	cgi.execute();
+
+	// cgi.parseHeader(response);
+	// cgi.parseboy(response);
+    // response.setBody(cgi.parseBody(output));
 }
 
 void     Handler::handle_request(t_server &server)
