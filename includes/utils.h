@@ -5,6 +5,7 @@
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
+#include <cstring>
 #include <exception>
 #include <unistd.h>
 #include <fcntl.h>

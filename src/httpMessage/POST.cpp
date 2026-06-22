@@ -17,22 +17,6 @@ std::string  mkfile(unsigned int file_counter, const std::string &extension)
 	std::string postfix;
 	std::stringstream ss;
 
-	// This is to handle the case when the counter reaches its maximum value
-	// and wraps around to 0, which could lead to overwriting existing files. By appending underscores to the prefix, 
-	//we can create a new namespace for the file names, allowing us to continue generating unique file names even after
-	// the counter resets.
-	// if (count == UINT_MAX)
-	// {
-	// 	count = 0;
-	// 	static unsigned int idx;
-	// 	update_counter("upload_idxcounter", count, 'r');		
-	// 	for (unsigned int i = 0; i < idx; ++i)	
-	// 		prefix += "_";
-	// 	idx++;
-	// 	update_counter("upload_idxcounter", count, 'w');
-	// }	might just delete this
-	
-	// i don't like this file_counter appraoch , it's not very efficient
 	ss << file_counter++;
 	ss >> postfix;
 	name = prefix + postfix + get_extension(extension);
@@ -47,8 +31,7 @@ void	Handler::handle_post(const location &loc, unsigned int &upload_counter)
 	if (loc.upload_path.empty())
 		throw FORBIDDEN;
 	errno  = 0;
-	if (stat(loc.upload_path.c_str(), &st) == -1)
-		throw INTERNAL_SERVER_ERROR;
+	validate_file_path(stat(loc.upload_path.c_str(), &st));
 	if (!S_ISDIR(st.st_mode))
 		throw FORBIDDEN;
 	errno = 0;

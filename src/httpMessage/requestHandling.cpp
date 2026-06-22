@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include "webserv.h"
+#include "CGIHandler.hpp"
 
 void validate_file_path(int val){
     if (val == -1) {
@@ -45,6 +46,26 @@ void Handler::handle_delete(std::string &path)
 	throw NO_CONTENT;
 }
 
+void	Handler::handle_cgi(const location &loc, std::string &path, const t_server& server)
+{
+	struct stat st;
+	std::string	ext;
+
+	size_t pos = path.rfind(".");
+	if (pos == std::string::npos)
+		throw FORBIDDEN;
+	errno  = 0;
+	validate_file_path(stat(path.c_str(), &st));
+	if (S_ISDIR(st.st_mode))
+		throw FORBIDDEN;
+	ext = path.substr(pos + 1);
+	if (loc.cgi_ext.find(ext) == loc.cgi_ext.end())
+		throw FORBIDDEN;
+	CGIHandler cgi(loc.cgi_ext.at(ext));
+	cgi.setEnvVars(request, request.getTarget(), path, server);
+	cgi.execute();
+}
+
 void     Handler::handle_request(t_server &server)
 {
 	strlocationMap::const_iterator it = server.locations.begin();
@@ -52,26 +73,32 @@ void     Handler::handle_request(t_server &server)
 
 	if (request.getHeaderValue("Host").empty())
 		throw BAD_REQUEST;
-	if (request.getMethod() == POST)
-		request.getTarget() += "/";
-	normalise_target(target);
-	request.setTarget(target);
-	for (;it != server.locations.end();++it){
-		if (target.size() >= it->first.size() && !target.compare(0, it->first.size(), it->first) &&
-			(target.size() == it->first.size() || target[it->first.size()] == '/'))
-			break;
+	{
+		if (request.getMethod() == POST)
+			request.getTarget() += "/";
+		normalise_target(target);
+		request.setTarget(target);
+		for (;it != server.locations.end();++it){
+			if (target.size() >= it->first.size() && !target.compare(0, it->first.size(), it->first) &&
+				(target.size() == it->first.size() || target[it->first.size()] == '/'))
+				break;
+		}
 	}
-	if (it == server.locations.end())
-		it = server.locations.find("/");
-	if (it == server.locations.end())
-		throw NOT_FOUND;
-	if (!it->second.redirection.second.empty())
-			response.redirect(it->second.redirection);
-	if (!it->second.methods.at(request.getMethod()))
-		throw METHOD_NOT_ALLOWED;
+	{
+		if (it == server.locations.end())
+			it = server.locations.find("/");
+		if (it == server.locations.end())
+			throw NOT_FOUND;
+		if (!it->second.redirection.second.empty())
+				response.redirect(it->second.redirection);
+		if (!it->second.methods.at(request.getMethod()))
+			throw METHOD_NOT_ALLOWED;
+	}
 	std::string path = (!it->second.root.empty() ? it->second.root : server.root) + "/" + target.substr(it->first.size());
 	if (path.empty())
-		throw INTERNAL_SERVER_ERROR; // not so sre about this
+		throw NOT_FOUND;
+	if (it->second.cgi)
+		handle_cgi(it->second, path, server);
 	switch (request.getMethod())
 	{
 		case GET:

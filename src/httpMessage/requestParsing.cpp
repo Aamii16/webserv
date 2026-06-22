@@ -4,8 +4,11 @@
 void	Request::parse_token_value(std::string &line, std::string &token, std::string &value, std::string delimiter)
 {
 	size_t pos = line.find(delimiter);
-	if (pos == std::string::npos)
+	if (pos == std::string::npos){
+
+		std::cout << "parsing token value at state " << state << "in: "<< line << std::endl;
 		throw BAD_REQUEST;
+	}
 	token = line.substr(0, pos);
 	if (pos + delimiter.size() > line.size())
 		throw BAD_REQUEST;
@@ -78,7 +81,7 @@ void	Request::parse_request_line(std::string &line)
 	else if (token == "DELETE")
 		method = DELETE;
 	else
-		method = UNKNOWN_METHOD;
+		throw NOT_IMPLEMENTED;
 	valid_request_line(method, target, version);
 	if ((pos = target.find("?")) != std::string::npos)
 		parse_token_value(target, target, query, "?");
@@ -99,6 +102,10 @@ void	Request::parse_header(std::string &header)
 		if (line.empty())
 		{
 			state = BODY;
+			if (header.size() > pos + 2)
+				header = header.substr(pos + 2);
+			else
+				header = "";
 			break ;
 		}	
 		if (state == REQ_LINE)

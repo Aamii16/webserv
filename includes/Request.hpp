@@ -65,6 +65,7 @@ class Request
         void    parse_request(std::string buffer, const size_t &max_body_size);
         //getters
         int         getMethod()const;
+        std::string getMethodString()const;
         int         getState()const;
         size_t      getContentLength();
         std::string getTarget()const;

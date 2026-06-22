@@ -6,6 +6,18 @@ Request::Request(){err_code = 0;state = 0;method = 0;content_length = 0;}
 
 int	Request::getMethod()const {return method;}
 
+std::string	Request::getMethodString()const
+{
+	if (method == GET)
+		return "GET";
+	else if (method == POST)
+		return "POST";
+	else if (method == DELETE)
+		return "DELETE";
+	else
+		return "";
+}
+
 int	Request::getState()const{return state;}
 
 size_t	Request::getContentLength(){return content_length;}

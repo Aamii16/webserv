@@ -11,38 +11,35 @@ i have to add exceptions for server error, and search if it is a 500 error code,
 cgi shit
 
 ===============================================================
-Here are the 4 simple steps to implement CGI:
-## 1. Set Up Environment Variables
-Create an array of strings (char* env[]) containing HTTP details for the script:
+## Part 1: Handling (Preparation & Routing)
+This part prepares the data inside your existing server architecture before running the script.
 
-* REQUEST_METHOD (GET, POST)
-* QUERY_STRING (everything after ? in URL)
-* CONTENT_LENGTH & CONTENT_TYPE (for POST)
-* SCRIPT_NAME (path to the script)
+* Parse Query and Path: Split the URI. Extract everything after ? into QUERY_STRING. Identify the script file path for SCRIPT_NAME.
+* Build Environment Array: Create a char* envp[] array populated with key-value strings (KEY=value) representing HTTP headers:
+* REQUEST_METHOD (GET / POST)
+   * CONTENT_LENGTH and CONTENT_TYPE (if a body exists)
+   * PATH_INFO (the requested resource path)
+* Create Inter-Process Pipes: Initialize two Unix pipes to send data to and receive data from the script:
+* pipe(cgi_to_script) (for sending the POST body)
+   * pipe(script_to_cgi) (for capturing the script's output)
 
-## 2. Create Pipes and Fork
-Setup communication channels and spawn a child process:
+------------------------------
+## Part 2: Execution (Process & Non-Blocking I/O)
+This part handles running the script safely without freezing your main server loop. [1] 
 
-* Create two pipes: pipe(pipe_in) and pipe(pipe_out).
-* Call fork().
-* In Child: Use dup2 to redirect stdin to pipe_in[0] and stdout to pipe_out[1]. Close unused pipe ends, then run the script using execve().
-* In Parent: Close pipe_in[0] and pipe_out[1].
+* Fork the Process: Call fork() to split your server into a parent and child process. [2, 3] 
+* In the Child Process:
+* Use dup2 to redirect standard input (stdin) to cgi_to_script[0].
+   * Use dup2 to redirect standard output (stdout) to script_to_cgi[1].
+   * Close all original pipe file descriptors.
+   * Call execve() to run the script interpreter (like Python or PHP). [4, 5, 6, 7] 
+* In the Parent Process:
+* Close the child’s ends of the pipes immediately.
+   * Write Body (POST only): Feed the HTTP request body into cgi_to_script[1] and close it so the script receives an EOF (End of File).
+   * Register to Multiplexer: Add script_to_cgi[0] to your select/poll/epoll loop. Read the script output asynchronously as it becomes available.
+   * Monitor and Reclaim: Track the child PID. If it times out, send kill(pid, SIGKILL). Otherwise, clean up the process using waitpid(pid, &status, WNOHANG). [8, 9, 10] 
 
-## 3. Write Body & Read Output (Non-Blocking)
-Pass request data to the script and capture the result:
 
-* Write the HTTP request body into pipe_in[1]. Close it immediately after so the script knows you are done sending data.
-* Add pipe_out[0] to your select/poll/epoll loop.
-* Read the script's output from pipe_out[0] only when data is ready. Track time to kill the process (SIGKILL) if it hangs.
-
-## 4. Parse CGI Response
-The script returns a mini-header (e.g., Status: 200 OK\r\nContent-Type: text/html\r\n\r\n<body>).
-
-* Parse the script's Status line.
-* Prepend a standard HTTP/1.1 <Status> line.
-* Forward the combined headers and body back to the client socket.
-
-Would you like a minimal C++ code template showing exactly how to execute the pipe, fork, and execve sequence?
 
 
 
@@ -113,7 +110,7 @@ POST still have same error: it throws error 500 internal server error
 "printf 'POST / HTTP/1.1\r\nHost: localhost' | nc localhost 8080"
 
 chunked requests still to be handled :
-"printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n' | nc localhost 8080"
+"printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Type: text/html\r\nContent-Length: 5\r\nHello\r\n\r\n\r\n' | nc localhost 8080"
 
 program segfaults when a non implemeted method is used by client "PATCH"
 
