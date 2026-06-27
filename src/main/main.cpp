@@ -26,17 +26,17 @@ int	main(int ac, char **av)
 		return (1);
 	parseConf(conf, file);
 
-	t_server &srv_cfg = conf.servers.begin()->second;
-	CoreServer core;
-	if (!core.addServer(srv_cfg.ip.empty() ? "0.0.0.0" : srv_cfg.ip,
-	                    srv_cfg.port,
-	                    srv_cfg))
-	{
-		p_error("CoreServer: failed to bind");
-		return (1);
-	}
+	// t_server &srv_cfg = conf.servers.begin()->second;
+	// CoreServer core;
+	// if (!core.addServer(srv_cfg.ip.empty() ? "0.0.0.0" : srv_cfg.ip,
+	//                     srv_cfg.port,
+	//                     srv_cfg))
+	// {
+	// 	p_error("CoreServer: failed to bind");
+	// 	return (1);
+	// }
 
-	core.run();
+	// core.run();
 
 	//update upload counter before exiting
 	update_counter(conf.upload_counter_file, conf.servers.begin()->second.upload_counter, 'w');

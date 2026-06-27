@@ -34,10 +34,6 @@ typedef enum s_token
 	PY
 }   token;
 
-// enum s_status_code_code
-// {
-
-// }   status_code_code;
 
 class ConfigException : public std::exception
 {
@@ -71,29 +67,26 @@ typedef struct s_location
 
 typedef std::map<std::string, location> strlocationMap;
 
-struct t_server
+typedef struct s_server
 {
 	std::string      				host;
     std::string				      	server_name;
 	std::string						listen;
-	std::string						ip;
-	int								port;
+	// key == port number, value == ip address
+	std::vector<std::pair<int, std::string> >						ports; 
 	std::string						root;
 	long       						max_body_size;
 	intstrMap						err_pages;	
 	std::map<std::string, location>	locations;
 	// upload counter to generate unique file names for uploads, stored in a file to persist across server restarts
 	unsigned int 					upload_counter;
-	
-
-	t_server() : port(8080), max_body_size(1048576), upload_counter(0) {}
-}	;	
+}	t_server;
 
 
 
 typedef struct s_configuration
 {
-	std::map<std::string, t_server>	servers; // key == port number
+	std::map<std::string, t_server>	servers; // key == server_name
 	std::string						upload_counter_file;
 }	t_configuration;
 

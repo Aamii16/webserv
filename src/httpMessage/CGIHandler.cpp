@@ -24,7 +24,7 @@ void	CGIHandler::setEnvVars(const Request& request, const std::string& script_pa
 	vars.push_back("REQUEST_METHOD=" + request.getMethodString());
 	vars.push_back("GATEWAY_INTERFACE=CGIHandler/1.1");
 	vars.push_back("SERVER_NAME="+ server.server_name);
-	vars.push_back("SERVER_PORT=" + num_to_str(server.port));
+	vars.push_back("SERVER_PORT=" + num_to_str(server.port));  i don't know which port you have to use here
 	vars.push_back("REQUEST_URI=" + request.getTarget() + request.getQuery());
 	vars.push_back("SERVER_PROTOCOL=" + request.getVersion());
 	vars.push_back("QUERY_STRING=" + request.getQuery());

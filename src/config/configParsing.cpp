@@ -35,20 +35,26 @@ bool valid_ip_port(t_server &server)
     size_t pos = server.listen.find(":");
     if (pos == std::string::npos)
         return false;
-    server.ip = server.listen.substr(0, pos);
-    server.port = 0;
+    std::string ip = server.listen.substr(0, pos);
+    int port = 0;
     if (pos + 1 >= server.listen.size())
         return false;
     std::string tmp = server.listen.substr(pos + 1);
-    for (size_t i = 0; i < tmp.size() && server.port < 50000 ;++i)
+    for (size_t i = 0; i < tmp.size() && port < 50000 ;++i)
     {
         if (!isdigit(static_cast<unsigned char>(tmp[i])))
             return false;
-        server.port = server.port * 10 + (tmp[i] - '0');
+        port = port * 10 + (tmp[i] - '0');
     }
-    if (server.port < 1024 || server.port > 49151)
+    if (port < 1024 || port > 49151) i'm not sure if this is necessary 
         return false;
-    return (valid_ip(server.ip));
+    for (size_t i = 0; i < server.ports.size(); ++i) {
+        if (server.ports[i].first == port && server.ports[i].second == ip) {
+            return false;
+        }
+    }
+    server.ports.push_back(std::make_pair(port, ip));
+    return (valid_ip(ip));
 }
 
 std::string parse_server(t_configuration &conf, std::ifstream &file, std::string &line)
@@ -69,7 +75,10 @@ std::string parse_server(t_configuration &conf, std::ifstream &file, std::string
         switch (idx)
         {
             case PORT:
-                serv.listen = value;break;
+                serv.listen = value;
+                if (!valid_ip_port(serv))
+                    throw ConfigException("Invalid server ip:port: " + serv.listen);
+                break;
             case ROOT:
                 serv.root = value;break;
             case SERVER_NAME:
@@ -86,11 +95,10 @@ std::string parse_server(t_configuration &conf, std::ifstream &file, std::string
                 throw ConfigException("Invalid Configuration Token at server: " + line);
         }
     }
-    conf.servers[serv.listen] = serv;
+    // conf.servers[serv.server_name] = serv;
+    conf.servers.insert(std::make_pair(serv.listen, serv));
     if (!serv.max_body_size)
         throw ConfigException("Invalid configuration, missing client_max_body_size");
-    if (!valid_ip_port(conf.servers[serv.listen]))
-        throw ConfigException("Invalid server ip:port: " + serv.listen);
     // update the upload counter for this server in case of a restart to avoid overwriting existing files
     update_counter(conf.upload_counter_file, conf.servers[serv.listen].upload_counter, 'r');
     return serv.listen;
@@ -159,7 +167,7 @@ void    parse_location(t_server &server, std::ifstream &file, std::string &line)
     server.locations[loc.alias] = loc;
 }
 
-void    print_conf(t_configuration &conf);
+void    print_conf(t_server &server);
 
 void	parseConf(t_configuration &conf, std::ifstream &file)
 {
@@ -197,25 +205,32 @@ void	parseConf(t_configuration &conf, std::ifstream &file)
         exit(1);
     }
     file.close();
-    // print_conf(conf);
+    print_conf(conf.servers.begin()->second);
 }
 
-void    print_conf(t_configuration &conf)
+void    print_conf(t_server &server)
 {
-    for (std::map<std::string, t_server>::const_iterator server_it = conf.servers.begin(); server_it != conf.servers.end(); ++server_it)
-    {
         std::cout << "=== SERVER ===" << std::endl;
-        std::cout << "Port: " << server_it->second.listen << std::endl;
-        // std::cout << "Name: " << server_it->second.name << std::endl;
-        std::cout << "Root: " << server_it->second.root << std::endl;
-        std::cout << "Max Body Size: " << server_it->second.max_body_size << std::endl;
+        // print the server's listen addresses and ports
+        std::cout << "Listen: ";
+        for (size_t i = 0; i < server.ports.size(); ++i)
+        {
+            std::cout << server.ports[i].second << ":" << server.ports[i].first;
+            if (i < server.ports.size() - 1)
+                std::cout << ", ";
+        }
+        std::cout << std::endl;
+        // std::cout << "Name: " << server.name << std::endl;
+        std::cout << "Root: " << server.root << std::endl;
+        std::cout << "Server Name: " << server.server_name << std::endl;
+        std::cout << "Max Body Size: " << server.max_body_size << std::endl;
 
         std::cout << "\n=== ERROR PAGES ===" << std::endl;
-        for (std::map<int, std::string>::const_iterator it = server_it->second.err_pages.begin(); it != server_it->second.err_pages.end(); ++it)
+        for (std::map<int, std::string>::const_iterator it = server.err_pages.begin(); it != server.err_pages.end(); ++it)
             std::cout << it->first << ": " << it->second << std::endl;
 
         std::cout << "\n=== LOCATIONS ===" << std::endl;
-        for (std::map<std::string, location>::const_iterator loc_it = server_it->second.locations.begin(); loc_it != server_it->second.locations.end(); ++loc_it)
+        for (std::map<std::string, location>::const_iterator loc_it = server.locations.begin(); loc_it != server.locations.end(); ++loc_it)
         {
             std::cout << "\nLocation:" << std::endl;
             std::cout << "  Path: " << loc_it->second.alias << std::endl;
@@ -247,5 +262,4 @@ void    print_conf(t_configuration &conf)
                     std::cout << "    " << cit->first << " -> " << cit->second << std::endl;
             }
         }
-    }
 }
