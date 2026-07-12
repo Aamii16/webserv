@@ -105,5 +105,28 @@ while (true) {
 need to add sig_handlers
 timeout clients (shld do it before finishing CGI to not get confused)
 keep the upload counter up to date whenever
+separation of fds
+need to handle cases of finish cgi and quit cgi
+
+## CGI & Core Fixes — Status
+
+### Done
+- In `parse_location` added initialisation of loc.cgi to avoid garbage value
+- in `Request_handling``handle_cgi` has been switched because cgi was going to `handle_get`
+- Non-blocking CGI: fork/exec via `CGIHandler::start()`, stdin/stdout pipes set `O_NONBLOCK` and driven through the same epoll loop as clients (`CoreServer::registerCgi/handleCgiEvent`)
+- CGI timeout (30s) with `SIGKILL` + reap, proper `epoll_ctl(DEL)`-before-`close()` call
+- CGI header/body parsing (`Status:` line → HTTP status, rest → headers/body)
+- Fixed `execve` never receiving the script path; fixed swapped `SCRIPT_NAME`/`SCRIPT_FILENAME`; fixed `.ext` lookup stripping the dot
+- Fixed `main.cpp` to bind every `listen` entry across all server blocks (was hardcoded to one socket) (need to fetch another way)
+- Fixed responses never reaching clients (`_writebuf commented)
+- Fixed uninitialized `location.cgi`/`auto_idx` causing non-CGI routes to be misrouted
+
+### To Do
+- Chunked transfer-encoding
+- Idle/slow client timeout (request timeout)
+- Graceful shutdown (SIGINT/SIGTERM handling) and exit status
+- Make core server more readable
+
+
 
 

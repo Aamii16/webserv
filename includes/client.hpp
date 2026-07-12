@@ -34,6 +34,7 @@ public:
     void     feedHandler();
 
     Handler& getHandler();
+    t_server& getServer() { return _server; }
 
 private:
     int          _fd;

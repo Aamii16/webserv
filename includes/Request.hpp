@@ -10,6 +10,7 @@ typedef enum s_state{
 	HEADERS,
 	BODY,
 	COMPLETE,
+	CGI_WAIT,
     ERROR
 }	state;
 

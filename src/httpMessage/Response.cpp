@@ -46,6 +46,7 @@ std::string getCodeMessage(int &code)
 		messages[431] = "Header Field Too Large";
 		messages[500] = "Internal Server Error";
 		messages[501] = "Not Implemented";
+		messages[504] = "Gateway Timeout";
 		messages[505] = "HTTP Version Not Supported";
 	}
 	return messages[code];

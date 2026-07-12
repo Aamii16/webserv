@@ -2,6 +2,8 @@
 
 #include "Response.hpp"
 
+class CGIHandler;
+
 class Handler
 {
 	int fd;
@@ -10,9 +12,11 @@ class Handler
 	// bool writeable;
 	Request		request;
 	Response	response;
+	CGIHandler	*cgi;
 	public:
 		s_state state;
 		Handler(int fd);
+		~Handler();
 
 
 		void    handle_request(t_server &server);
@@ -26,6 +30,11 @@ class Handler
 		s_state       getState() const;
 		std::string getResponseString();
 		void        reset(); 
+
+		bool        isCgiPending() const;
+		CGIHandler* getCgi() const;
+		void        finishCgi(const t_server &server);
+		void        abortCgi(const t_server &server, int errcode);
 
 };
 

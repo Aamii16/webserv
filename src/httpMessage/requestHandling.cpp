@@ -58,16 +58,19 @@ void	Handler::handle_cgi(const location &loc, std::string &path, const t_server&
 	validate_file_path(stat(path.c_str(), &st));
 	if (S_ISDIR(st.st_mode))
 		throw FORBIDDEN;
-	ext = path.substr(pos + 1);
+	ext = path.substr(pos);
 	if (loc.cgi_ext.find(ext) == loc.cgi_ext.end())
 		throw FORBIDDEN;
-	CGIHandler cgi(loc.cgi_ext.at(ext));
-	cgi.setEnvVars(request, request.getTarget(), path, server);
-	cgi.execute();
 
-	// cgi.parseHeader(response);
-	// cgi.parseboy(response);
-    // response.setBody(cgi.parseBody(output));
+	cgi = new CGIHandler(loc.cgi_ext.at(ext));
+	cgi->setEnvVars(request, path, request.getTarget(), server);
+	if (!cgi->start())
+	{
+		delete cgi;
+		cgi = NULL;
+		throw INTERNAL_SERVER_ERROR;
+	}
+	state = CGI_WAIT;
 }
 
 void     Handler::handle_request(t_server &server)
@@ -102,7 +105,10 @@ void     Handler::handle_request(t_server &server)
 	if (path.empty())
 		throw NOT_FOUND;
 	if (it->second.cgi)
+	{
 		handle_cgi(it->second, path, server);
+		return ;
+	}
 	switch (request.getMethod())
 	{
 		case GET:

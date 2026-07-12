@@ -1,4 +1,5 @@
 #include "Handler.hpp"
+#include "CGIHandler.hpp"
 
 
 void print_request(const Request &req)
@@ -25,11 +26,18 @@ void print_request(const Request &req)
 	std::cout << "state: " << req.getState() << std::endl;
 }
 
-Handler::Handler(int fd) : fd(fd), state(READING) {}
+Handler::Handler(int fd) : fd(fd), cgi(NULL), state(READING) {}
 
+Handler::~Handler()
+{
+	delete cgi;
+}
 
 void Handler::process(t_server &server, std::string buffer)
 {
+	if (state == CGI_WAIT)
+		return ; 
+
 	if (buffer.empty() && request.getState() != COMPLETE)
 		return ;
 	try{
@@ -51,6 +59,8 @@ void Handler::process(t_server &server, std::string buffer)
 		state = COMPLETE;
 		response.setStatusCode(status);
 	}
+	if (state == CGI_WAIT)
+		return ; // handle_cgi started with mo issue
 	if (state == ERROR || state == COMPLETE)
 	{
 		setResponseHeaders(server);
@@ -71,14 +81,47 @@ std::string Handler::getResponseString()
 
 void Handler::reset()
 {
+	delete cgi;
+	cgi = NULL;
     request  = Request();
     response = Response();
     state    = REQ_LINE;
 }
 
-// void Handler::reset()
-// {
-// 	request = Request();
-// 	response = Response();
-// 	state = REQ_LINE;
-// }
+bool Handler::isCgiPending() const
+{
+	return state == CGI_WAIT;
+}
+
+CGIHandler* Handler::getCgi() const
+{
+	return cgi;
+}
+
+void Handler::finishCgi(const t_server &server)
+{
+	if (!cgi)
+		return ;
+	cgi->parseHeaders(response);
+	response.setBody(cgi->parseBody());
+	delete cgi;
+	cgi = NULL;
+	request.setState(COMPLETE);
+	state = COMPLETE;
+	setResponseHeaders(server);
+	response.print_response();
+}
+
+void Handler::abortCgi(const t_server &server, int errcode)
+{
+	delete cgi;
+	cgi = NULL;
+	err_codes ec = static_cast<err_codes>(errcode);
+	request.setState(ERROR);
+	state = ERROR;
+	response.setStatusCode(ec);
+	response.setHeader("Content-Type", "text/html");
+	response.setBody(response.geterrpage(server, errcode));
+	setResponseHeaders(server);
+	response.print_response();
+}

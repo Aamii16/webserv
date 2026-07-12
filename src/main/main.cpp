@@ -26,17 +26,43 @@ int	main(int ac, char **av)
 		return (1);
 	parseConf(conf, file);
 
-	// t_server &srv_cfg = conf.servers.begin()->second;
-	// CoreServer core;
-	// if (!core.addServer(srv_cfg.ip.empty() ? "0.0.0.0" : srv_cfg.ip,
-	//                     srv_cfg.port,
-	//                     srv_cfg))
-	// {
-	// 	p_error("CoreServer: failed to bind");
-	// 	return (1);
-	// }
+	CoreServer core;
+	bool bound_any = false;
 
-	// core.run();
+	// A single "server" block may itself listen on more than one host:port
+	// pair (its `ports` vector), and the config as a whole may define more
+	// than one server block, so every port of every server needs its own
+	// listening socket added to the shared epoll instance.
+	for (std::map<std::string, t_server>::iterator sit = conf.servers.begin();
+		 sit != conf.servers.end(); ++sit)
+	{
+		t_server &srv_cfg = sit->second;
+
+		if (srv_cfg.ports.empty())
+		{
+			p_error("Server block has no listen directive: " + srv_cfg.server_name);
+			continue;
+		}
+
+		for (size_t i = 0; i < srv_cfg.ports.size(); ++i)
+		{
+			int         port = srv_cfg.ports[i].first;
+			std::string host = srv_cfg.ports[i].second.empty() ? "0.0.0.0" : srv_cfg.ports[i].second;
+
+			if (core.addServer(host, port, srv_cfg))
+				bound_any = true;
+			else
+				p_error("CoreServer: failed to bind " + host + ":" + num_to_str(port));
+		}
+	}
+
+	if (!bound_any)
+	{
+		p_error("No listening sockets could be created, exiting.");
+		return (1);
+	}
+
+	core.run();
 
 	//update upload counter before exiting
 	update_counter(conf.upload_counter_file, conf.servers.begin()->second.upload_counter, 'w');

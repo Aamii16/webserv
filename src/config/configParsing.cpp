@@ -46,7 +46,7 @@ bool valid_ip_port(t_server &server)
             return false;
         port = port * 10 + (tmp[i] - '0');
     }
-    if (port < 1024 || port > 49151) i'm not sure if this is necessary 
+    if (port < 1024 || port > 49151) // restrict to non-privileged, non-ephemeral ports
         return false;
     for (size_t i = 0; i < server.ports.size(); ++i) {
         if (server.ports[i].first == port && server.ports[i].second == ip) {
@@ -127,7 +127,11 @@ void    parse_location(t_server &server, std::ifstream &file, std::string &line)
     std::string token;
     std::string value;
     location    loc;
-    
+
+    loc.cgi = false;
+    loc.auto_idx = false;
+    loc.redirection = std::make_pair(0, std::string());
+
     while(std::getline(file, line) && !line.empty() && line.find("}") == std::string::npos)
     {
         int idx = parseTokenValue(line, token, value, 1);
