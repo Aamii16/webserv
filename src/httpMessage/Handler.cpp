@@ -35,10 +35,7 @@ Handler::~Handler()
 
 void Handler::process(t_server &server, std::string buffer)
 {
-	if (state == CGI_WAIT)
-		return ; 
-
-	if (buffer.empty() && request.getState() != COMPLETE)
+	if (state == CGI_WAIT || (buffer.empty() && request.getState() != COMPLETE))
 		return ;
 	try{
 		request.parse_request(buffer, server.max_body_size);

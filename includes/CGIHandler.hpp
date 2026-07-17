@@ -15,8 +15,8 @@ class CGIHandler
 	std::string					output;      
 	std::string					body;        
 	size_t						body_offset; 
-	pid_t						pid
-	int							stdin_fd;    
+	pid_t						pid;
+	int							stdin_fd;
 	int							stdout_fd;   
 
 	public:

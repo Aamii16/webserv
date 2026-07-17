@@ -18,7 +18,7 @@ class Handler
 		Handler(int fd);
 		~Handler();
 
-
+		const location	&findLocation(t_server &server, std::string &path);
 		void    handle_request(t_server &server);
 		void	process(t_server &server, std::string buffer);
 		void	handle_cgi(const location &loc, std::string &path, const t_server &server);

@@ -122,7 +122,9 @@ need to handle cases of finish cgi and quit cgi
 - Fixed uninitialized `location.cgi`/`auto_idx` causing non-CGI routes to be misrouted
 
 ### To Do
-- Chunked transfer-encoding
+
+
+- Chunked transfer-encoding //yousef confirmed we shouldnt do anything bout this coz cgi handle it by default
 - Idle/slow client timeout (request timeout)
 - Graceful shutdown (SIGINT/SIGTERM handling) and exit status
 - Make core server more readable
