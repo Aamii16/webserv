@@ -4,16 +4,27 @@
 void	Request::parse_token_value(std::string &line, std::string &token, std::string &value, std::string delimiter)
 {
 	size_t pos = line.find(delimiter);
-	if (pos == std::string::npos){
-
-		std::cout << "parsing token value at state " << state << "in: "<< line << std::endl;
+	if (pos == std::string::npos)
 		throw BAD_REQUEST;
-	}
 	std::string tmp_token = line.substr(0, pos);
 	if (pos + delimiter.size() > line.size())
 		throw BAD_REQUEST;
 	value = line.substr(pos + delimiter.size());
 	token = tmp_token;
+}
+
+void parse_query(std::string &target, std::string &query)
+{
+	size_t pos = target.find("?");
+	if (pos != std::string::npos)
+	{
+		query = target.substr(pos + 1);
+		target = target.substr(0, pos);
+		if (query.find(" ") != std::string::npos)
+			throw BAD_REQUEST;
+	}
+	else
+		query = "";
 }
 
 int	has_whitespace(std::string &str)
@@ -84,8 +95,7 @@ void	Request::parse_request_line(std::string &line)
 	else
 		throw NOT_IMPLEMENTED;
 	valid_request_line(method, target, version);
-	if ((pos = target.find("?")) != std::string::npos)
-		parse_token_value(target, target, query, "?");
+	parse_query(target, query);
 	state = HEADERS;
 }
 
