@@ -9,10 +9,11 @@ void	Request::parse_token_value(std::string &line, std::string &token, std::stri
 		std::cout << "parsing token value at state " << state << "in: "<< line << std::endl;
 		throw BAD_REQUEST;
 	}
-	token = line.substr(0, pos);
+	std::string tmp_token = line.substr(0, pos);
 	if (pos + delimiter.size() > line.size())
 		throw BAD_REQUEST;
 	value = line.substr(pos + delimiter.size());
+	token = tmp_token;
 }
 
 int	has_whitespace(std::string &str)
