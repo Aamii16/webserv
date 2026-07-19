@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Method Test Form</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        .box { border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-bottom: 20px; background: #fafafa; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 8px; margin: 8px 0 16px; box-sizing: border-box; }
+        input[type="submit"] { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>HTTP Method Test Suite</h1>
+
+    <!-- GET Test -->
+    <div class="box">
+        <h3>1. Test GET Request (Query Strings)</h3>
+        <form action="/cgi-bin/test_cgi.py" method="GET">
+            <label>Your Name:</label>
+            <input type="text" name="username" placeholder="John Doe">
+            <input type="submit" value="Submit via GET">
+        </form>
+    </div>
+
+    <!-- POST Test -->
+    <div class="box">
+        <h3>2. Test POST Request (URL-Encoded payload)</h3>
+        <form action="/cgi-bin/test_cgi.py" method="POST">
+            <label>Message to Server:</label>
+            <input type="text" name="message" placeholder="Hello Webserver">
+            <input type="submit" value="Submit via POST">
+        </form>
+    </div>
+
+    <!-- File Upload Test -->
+    <div class="box">
+        <h3>3. Test Multipart/Form-Data (File Upload)</h3>
+        <form action="/cgi-bin/upload.py" method="POST" enctype="multipart/form-data">
+            <label>Select File to Upload:</label>
+            <input type="file" name="fileToUpload">
+            <input type="submit" value="Upload File">
+        </form>
+    </div>
+</body>
+</html>
