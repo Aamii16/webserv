@@ -82,7 +82,7 @@ static int	valid_header(std::string &key, std::string &value)
 void	Request::parse_request_line(std::string &line)
 {
 	std::string	token;
-	size_t pos;
+	// size_t pos;
 
 	parse_token_value(line, token, line, " ");
 	parse_token_value(line, target, version, " ");
