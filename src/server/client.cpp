@@ -51,6 +51,6 @@ ssize_t Client::send()
 void Client::feedHandler()
 {
     _handler.process(_server, _readBuf);
-    if (_handler.getState() == COMPLETE || _handler.getState() == ERROR)
+    if (_handler.getState() == COMPLETE || _handler.getState() == ERROR || _handler.getState() == CGI_WAIT)
         _readBuf.clear();
 }

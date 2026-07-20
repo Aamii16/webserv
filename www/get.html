@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced GET Query Tester</title>
+    <style>
+        body { font-family: sans-serif; max-width: 650px; margin: 40px auto; padding: 20px; line-height: 1.6; background-color: #f9f9f9; }
+        .card { border: 1px solid #ddd; padding: 25px; border-radius: 10px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .checkbox-group { display: flex; gap: 15px; margin-top: 5px; }
+        .checkbox-group label { font-weight: normal; display: inline; }
+        input[type="submit"] { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; }
+        input[type="submit"]:hover { background: #218838; }
+        code { background: #eee; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Multi-Query String Tester</h2>
+        <p>This form simulates a detailed filter search to send multiple keys and values via <code>GET</code>.</p>
+        
+        <form action="/cgi-bin/test_cgi.py" method="GET">
+            
+            <!-- 1. Text string with spaces/special characters -->
+            <div class="form-group">
+                <label for="search">Search Keyword (Tests URL encoding):</label>
+                <input type="text" id="search" name="search" value="ice cream & cake!">
+            </div>
+
+            <!-- 2. Numeric parameter -->
+            <div class="form-group">
+                <label for="max_price">Max Price (Tests numbers):</label>
+                <input type="number" id="max_price" name="max_price" value="50">
+            </div>
+
+            <!-- 3. Dropdown list selection -->
+            <div class="form-group">
+                <label for="category">Category (Tests basic strings):</label>
+                <select id="category" name="category">
+                    <option value="dessert" selected>Desserts</option>
+                    <option value="beverages">Beverages</option>
+                    <option value="appetizers">Appetizers</option>
+                </select>
+            </div>
+
+            <!-- 4. Multiple inputs with the same or boolean values -->
+            <div class="form-group">
+                <label>Options (Tests toggles/booleans):</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="available" value="true" checked> In Stock</label>
+                    <label><input type="checkbox" name="discount" value="false"> On Sale Only</label>
+                </div>
+            </div>
+
+            <!-- 5. Intentionally Blank Field -->
+            <div class="form-group">
+                <label for="notes">Notes (Left blank to test trailing empty values):</label>
+                <input type="text" id="notes" name="notes" placeholder="Leave this empty to test key without value">
+            </div>
+
+            <input type="submit" value="Send Multi-Query Request">
+        </form>
+    </div>
+
+</body>
+</html>
